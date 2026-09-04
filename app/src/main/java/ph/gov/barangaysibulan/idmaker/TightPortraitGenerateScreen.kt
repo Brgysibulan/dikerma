@@ -19,7 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -64,7 +63,7 @@ fun TightPortraitGenerateScreen() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Generate ID", style = MaterialTheme.typography.headlineSmall)
-        Text("Portrait CR80 • exact 53.98 × 85.60 mm • 2 × 2 cutting block • no gap between IDs")
+        Text("A4 portrait • 4 fixed paper slots • Publisher-matched cut lines • CR80 ID centered in each slot")
 
         if (employees.isEmpty()) {
             Card(Modifier.fillMaxWidth()) {
@@ -121,10 +120,11 @@ fun TightPortraitGenerateScreen() {
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("A4 layout", fontWeight = FontWeight.Bold)
-                Text("Top-left: Person 1 Front")
-                Text("Top-right: Person 1 Back")
-                Text(if (second == null) "Bottom row: blank" else "Bottom-left: Person 2 Front • Bottom-right: Person 2 Back")
-                Text("All four slots touch edge-to-edge. No internal spacing.", style = MaterialTheme.typography.bodySmall)
+                Text("Slot 1 / top-left: Person 1 Front")
+                Text("Slot 2 / top-right: Person 1 Back")
+                Text(if (second == null) "Slots 3 & 4 / bottom row: blank" else "Slot 3: Person 2 Front • Slot 4: Person 2 Back")
+                Text("Each paper slot is about 85.01 × 115.05 mm and has a visible cut line.", style = MaterialTheme.typography.bodySmall)
+                Text("The ID itself stays CR80 portrait at 53.98 × 85.60 mm and is centered inside the paper slot.", style = MaterialTheme.typography.bodySmall)
             }
         }
 
@@ -145,6 +145,31 @@ fun TightPortraitGenerateScreen() {
 }
 
 private const val TIGHT_PT_PER_MM = 72f / 25.4f
+private const val SLOT_W_MM = 85.01f
+private const val SLOT_H_MM = 115.05f
+private const val SLOT_LEFT_1_MM = 19.97f
+private const val SLOT_LEFT_2_MM = 105.02f
+private const val SLOT_TOP_1_MM = 14.77f
+private const val SLOT_TOP_2_MM = 168.62f
+private const val CARD_W_MM = 53.98f
+private const val CARD_H_MM = 85.60f
+
+private fun mm(value: Float): Float = value * TIGHT_PT_PER_MM
+
+private fun paperSlot(leftMm: Float, topMm: Float): RectF = RectF(
+    mm(leftMm),
+    mm(topMm),
+    mm(leftMm + SLOT_W_MM),
+    mm(topMm + SLOT_H_MM)
+)
+
+private fun centeredCard(slot: RectF): RectF {
+    val cardW = mm(CARD_W_MM)
+    val cardH = mm(CARD_H_MM)
+    val left = slot.left + (slot.width() - cardW) / 2f
+    val top = slot.top + (slot.height() - cardH) / 2f
+    return RectF(left, top, left + cardW, top + cardH)
+}
 
 private fun writeTightPortraitPdf(
     context: Context,
@@ -155,30 +180,25 @@ private fun writeTightPortraitPdf(
 ): Boolean {
     val pdf = PdfDocument()
     return try {
-        val pageW = 595f
-        val pageH = 842f
-        val page = pdf.startPage(PdfDocument.PageInfo.Builder(pageW.toInt(), pageH.toInt(), 1).create())
+        val pageW = 595
+        val pageH = 842
+        val page = pdf.startPage(PdfDocument.PageInfo.Builder(pageW, pageH, 1).create())
         val canvas = page.canvas
         canvas.drawColor(Color.WHITE)
 
-        val cardW = 53.98f * TIGHT_PT_PER_MM
-        val cardH = 85.60f * TIGHT_PT_PER_MM
-        val blockW = cardW * 2f
-        val blockH = cardH * 2f
-        val left = (pageW - blockW) / 2f
-        val top = (pageH - blockH) / 2f
+        val slot1 = paperSlot(SLOT_LEFT_1_MM, SLOT_TOP_1_MM)
+        val slot2 = paperSlot(SLOT_LEFT_2_MM, SLOT_TOP_1_MM)
+        val slot3 = paperSlot(SLOT_LEFT_1_MM, SLOT_TOP_2_MM)
+        val slot4 = paperSlot(SLOT_LEFT_2_MM, SLOT_TOP_2_MM)
 
-        val topLeft = RectF(left, top, left + cardW, top + cardH)
-        val topRight = RectF(left + cardW, top, left + blockW, top + cardH)
-        val bottomLeft = RectF(left, top + cardH, left + cardW, top + blockH)
-        val bottomRight = RectF(left + cardW, top + cardH, left + blockW, top + blockH)
+        listOf(slot1, slot2, slot3, slot4).forEach { tightDrawCutLine(canvas, it) }
 
-        tightDrawFront(context, canvas, topLeft, first, prefs)
-        tightDrawBack(context, canvas, topRight, first, prefs)
+        tightDrawFront(context, canvas, centeredCard(slot1), first, prefs)
+        tightDrawBack(context, canvas, centeredCard(slot2), first, prefs)
 
         if (second != null) {
-            tightDrawFront(context, canvas, bottomLeft, second, prefs)
-            tightDrawBack(context, canvas, bottomRight, second, prefs)
+            tightDrawFront(context, canvas, centeredCard(slot3), second, prefs)
+            tightDrawBack(context, canvas, centeredCard(slot4), second, prefs)
         }
 
         pdf.finishPage(page)
@@ -191,6 +211,15 @@ private fun writeTightPortraitPdf(
     } finally {
         pdf.close()
     }
+}
+
+private fun tightDrawCutLine(canvas: Canvas, slot: RectF) {
+    val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
+        style = Paint.Style.STROKE
+        strokeWidth = 0.5f
+    }
+    canvas.drawRect(slot, p)
 }
 
 private fun tightDrawFront(context: Context, canvas: Canvas, r: RectF, e: Employee, prefs: SharedPreferences) {
