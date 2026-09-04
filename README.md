@@ -24,7 +24,7 @@ Latest completed work:
 - Removed the duplicate Punong Barangay signatory block from the bottom of the Front ID.
 - Preserved the v0.6.1 signature cleanup, full-month DOB formatting, background-first rendering, and independent outline controls.
 
-Version 0.7.1 automated validation is required before release handoff. After installation, arrange and lock one layout, then generate a new PDF using the same employee/template data. Do not describe the layout as visually final until the user approves the screenshots and Actual Size / 100% test print.
+GitHub Actions run **#77** passed the v0.7.1 debug APK compile, offline-only verification, and `BarangayIDMaker-debug-apk` artifact upload. After installation, arrange and lock one layout, then generate a new PDF using the same employee/template data. Do not describe the layout as visually final until the user approves the screenshots and Actual Size / 100% test print.
 
 ## Locked Physical ID Size
 Each generated front/back ID is:

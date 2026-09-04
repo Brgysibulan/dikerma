@@ -7,7 +7,7 @@ Date: September 4, 2026
 - Branch: `main`
 - Working implementation: saved Front/Back Layout Studio and shared PDF layout model
 - Current build: **0.7.1 / versionCode 10**
-- GitHub Actions: validation pending for the v0.7.1 commit
+- GitHub Actions: run **#77** passed compile and offline-only verification
 - APK artifact: `BarangayIDMaker-debug-apk`
 
 The user tested the earlier v0.6.0 PDF and supplied a screenshot. That screenshot is a test reference only and was **not approved as final**.
@@ -34,17 +34,16 @@ Corrections implemented through v0.7.1:
 - Kept signature cleanup transparent, with a white preview surface, so no black or white signature box is added to the ID.
 
 Required next test:
-1. Confirm the v0.7.1 build, offline-only check, and APK artifact upload succeed.
-2. Install the v0.7.1 APK from the `BarangayIDMaker-debug-apk` artifact.
-3. Upload the approved blank Front and Back backgrounds.
-4. Open Layout Studio, arrange both sides, save, and lock the placement.
-5. Reopen Layout Studio and confirm the saved positions remain.
-6. Generate IDs for two employees and confirm the same layout is applied to both.
-7. Confirm per-text underline is independent and off by default.
-8. Confirm the ID-photo cleanup result is pure white and the signature remains transparent.
-9. Confirm Important Notice and footer do not overlap.
-10. Send the new Front/Back screenshot for another layout review.
-11. Print at Actual Size / 100% and measure 85 × 115 mm before approval.
+1. Install the v0.7.1 APK from the `BarangayIDMaker-debug-apk` artifact.
+2. Upload the approved blank Front and Back backgrounds.
+3. Open Layout Studio, arrange both sides, save, and lock the placement.
+4. Reopen Layout Studio and confirm the saved positions remain.
+5. Generate IDs for two employees and confirm the same layout is applied to both.
+6. Confirm per-text underline is independent and off by default.
+7. Confirm the ID-photo cleanup result is pure white and the signature remains transparent.
+8. Confirm Important Notice and footer do not overlap.
+9. Send the new Front/Back screenshot for another layout review.
+10. Print at Actual Size / 100% and measure 85 × 115 mm before approval.
 
 ## Current Build Purpose
 The current build is for arranging one reusable professional composition and applying it uniformly to a planned 200-ID batch, while preserving the corrected **85 × 115 mm portrait ID**, user-controlled outlines, and consistent typography.

@@ -10,7 +10,8 @@ User-friendly text and image cleanup controls.
 - Added a white image-preview surface and clearer processing/result messages.
 - Preserved Keep Original behavior and existing employee records.
 - Android version bumped to **0.7.1 / versionCode 10**.
-- Automated build, offline-only verification, and APK artifact validation are required before release handoff.
+- GitHub Actions run **#77** passed the debug APK compile, offline-only merged-manifest verification, and `BarangayIDMaker-debug-apk` artifact upload.
+- Visual placement remains subject to the user's generated-PDF screenshot review and Actual Size / 100% test print.
 
 ## 0.7.0 — September 4, 2026
 
