@@ -5,6 +5,15 @@ Offline Android ID maker for Barangay Sibulan.
 ## Current Status
 The app is already able to manage employee ID data offline and generate a print-ready A4 PDF. The latest build also includes the corrected paper-slot layout based on the actual `ID SIZE.pub` print template.
 
+## Offline-Only Policy
+This app is intentionally designed to work without internet access after installation.
+
+- No `android.permission.INTERNET` permission is granted to the app.
+- The Android manifest explicitly removes the INTERNET permission if a future library/dependency tries to add it during manifest merging.
+- GitHub Actions checks the merged Android manifests after every build and fails the build if INTERNET permission appears.
+- Employee records, photos, signatures, logos, templates, settings, QR data, and PDF generation are stored/processed locally on the Android device.
+- GitHub is only used to develop and build new APK versions; the installed app itself does not need GitHub or a network connection to operate.
+
 ## Current Features
 - Single-user Android app
 - Offline employee records using Room database
@@ -14,7 +23,7 @@ The app is already able to manage employee ID data offline and generate a print-
 - Stored Punong Barangay name, position and signature
 - Uploadable front and back ID design templates
 - Permission-safe Android document/image pickers
-- No broad storage, camera, contacts, location, microphone or notification permissions
+- No broad storage, camera, contacts, location, microphone, notification, or internet permission
 - A4 portrait PDF generation
 - Supports 1 or 2 persons per A4 sheet
 - Print instruction: use **Actual Size / 100%** and do not use **Fit to Page**
@@ -87,7 +96,8 @@ The Android launcher icon now uses:
 - Confirmed the correct front/back pairing for two people per sheet
 - Added green launcher icon with a white **B**
 - Connected normal and round launcher icons in the Android manifest
-- Latest debug APK build completed successfully in GitHub Actions
+- Locked the application to **offline-only** operation by explicitly removing `android.permission.INTERNET`
+- Added a GitHub Actions build check that fails if INTERNET permission appears in the final merged Android manifests
 
 ## Build and APK
 GitHub Actions automatically builds a debug APK on every push to `main`.
@@ -102,4 +112,4 @@ To get the latest APK:
 6. Download **BarangayIDMaker-debug-apk**
 
 ## Current Direction
-The app remains an offline-first Barangay ID Maker. The print layout is now locked to the real paper template so future ID-design changes should not alter the physical A4 slot positions or cutting guides unless the paper template itself changes.
+The app remains a fully offline Barangay ID Maker. The print layout is locked to the real paper template so future ID-design changes should not alter the physical A4 slot positions or cutting guides unless the paper template itself changes. Future photo/signature processing should also remain on-device and must not require cloud or network processing.
