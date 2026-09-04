@@ -312,11 +312,11 @@ private fun tightDrawFront(context: Context, canvas: Canvas, r: RectF, e: Employ
     tightTextFit(canvas, prefs.getString("barangay", "BARANGAY SIBULAN") ?: "BARANGAY SIBULAN", r.centerX(), cardY(r, 10.6f), headerWidth, header, 5.0f, 3.7f)
     tightTextFit(canvas, prefs.getString("id_heading", "BARANGAY EMPLOYEE ID") ?: "BARANGAY EMPLOYEE ID", r.centerX(), cardY(r, 15.1f), mm(48f), header, 7.4f, 5.2f)
 
-    // Exact requested employee photo size: 30 × 35 mm.
+    // Exact requested employee photo frame: 30 × 35 mm, center-cropped without stretching.
     val photoRect = cardRect(r, 2.5f, 20.5f, 30f, 35f)
     val photo = tightLoadBitmap(context, e.photoUri)
     if (photo != null) {
-        canvas.drawBitmap(photo, null, photoRect, imagePaint)
+        tightCenterCrop(canvas, photo, photoRect)
         photo.recycleSafely()
     } else {
         tightLabeledBox(canvas, photoRect, "ID PHOTO")
@@ -406,7 +406,6 @@ private fun tightDrawBack(context: Context, canvas: Canvas, r: RectF, e: Employe
     bold.textAlign = Paint.Align.CENTER
     tightTextFit(canvas, "IDENTIFICATION", r.centerX(), cardY(r, 18.0f), mm(45f), bold, 6.1f, 4.5f)
     normal.textAlign = Paint.Align.LEFT
-    normal.textSize = 4.7f
     val identification = "This identification card is issued to the bearer whose photograph appears herein and who is a bona fide employee of the Barangay Local Government Unit of Sibulan."
     tightDrawWrappedText(canvas, identification, left, cardY(r, 21.0f), rightWidth, normal, 4.7f, 5.5f, 4)
 
