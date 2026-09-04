@@ -19,10 +19,12 @@ This app is intentionally designed to work without internet access after install
 - Offline employee records using Room database
 - Employee photo and signature per record
 - Camera or Gallery input for employee photo and signature
+- Existing ID-photo upload from Gallery/files; taking a new picture is not required
+- Uploaded ID photos and camera photos use the same fully offline white-background cleanup workflow
 - Fully offline plain-background cleanup for ID photos
 - Fully offline paper/background removal for signatures
 - Processed image preview before saving the employee record
-- WEBV3LITE QR token / QR image stored per employee
+- WEBV3LITE QR image can be uploaded per employee and placed on the printed ID
 - Stored Logo 1 and Logo 2
 - Stored Punong Barangay name, position and signature
 - Uploadable front and back ID design templates
@@ -33,15 +35,28 @@ This app is intentionally designed to work without internet access after install
 - Supports 1 or 2 persons per A4 sheet
 - Print instruction: use **Actual Size / 100%** and do not use **Fit to Page**
 
+## ID Photo Input: Camera or Existing Photo Upload
+The user does not need to take every employee photo inside the app.
+
+There are two supported ways to provide an employee ID photo:
+
+1. **Camera** — take a new picture using the device camera.
+2. **Gallery / File Upload** — choose an existing ID photo already saved on the device.
+
+Both sources use the same offline processing pipeline before the photo is saved to the employee record. This means an already-existing employee ID photo can be uploaded directly and the app will still attempt to remove its plain background, replace that background with pure white, auto-crop the subject, and show a processed preview.
+
+If the uploaded image already has a clean white background, it can still be selected from Gallery/files and processed locally without requiring a new camera capture.
+
 ## Offline ID Photo Cleanup
-The employee editor now supports **Camera** and **Gallery** for the ID photo.
+The employee editor supports **Camera** and **Gallery** for the ID photo.
 
-Recommended capture setup:
+Recommended capture/upload setup:
 
-- Put the person in front of a **plain solid-color background**.
+- Use a photo where the person is in front of a **plain solid-color background** whenever background replacement is needed.
 - Use even lighting and avoid strong shadows on the background.
 - Use a background color that contrasts with the person's hair and clothing.
 - Keep the head and shoulders clearly separated from the background.
+- Existing ID photos from the device may be uploaded instead of taking a new picture.
 
 Processing happens fully on-device:
 
@@ -75,6 +90,9 @@ Processing happens fully on-device:
 6. A processed preview is shown before the employee record is saved.
 
 The transparent signature can then be placed cleanly over the ID design during PDF generation.
+
+## QR Workflow
+QR generation is intentionally not required inside the app. The preferred workflow is to upload the employee's existing WEBV3LITE QR image. The uploaded QR image is stored with the employee record and used in the generated ID PDF.
 
 ## ID Size
 The actual employee ID remains CR80 portrait size:
@@ -147,11 +165,14 @@ The Android launcher icon now uses:
 - Locked the application to **offline-only** operation by explicitly removing `android.permission.INTERNET`
 - Added a GitHub Actions build check that fails if INTERNET permission appears in the final merged Android manifests
 - Added Camera and Gallery actions for ID photos and signatures
+- Documented that an existing ID photo may be uploaded instead of taking a new camera photo
+- Confirmed that camera photos and uploaded photos use the same offline white-background cleanup pipeline
 - Added offline plain-background detection for ID photos
 - Added automatic white-background replacement and square auto-crop for ID photos
 - Added offline light-paper removal and transparent PNG generation for signatures
 - Added processed previews and retake/replace workflow
 - Added private local file storage and FileProvider support for processed images and temporary camera captures
+- Kept QR handling simple: upload the existing WEBV3LITE QR image instead of requiring in-app QR generation
 
 ## Build and APK
 GitHub Actions automatically builds a debug APK on every push to `main`.
@@ -166,4 +187,4 @@ To get the latest APK:
 6. Download **BarangayIDMaker-debug-apk**
 
 ## Current Direction
-The app remains a fully offline Barangay ID Maker. The print layout is locked to the real paper template so future ID-design changes should not alter the physical A4 slot positions or cutting guides unless the paper template itself changes. Photo and signature cleanup must remain on-device and must not require cloud or network processing.
+The app remains a fully offline Barangay ID Maker. The print layout is locked to the real paper template so future ID-design changes should not alter the physical A4 slot positions or cutting guides unless the paper template itself changes. Photo and signature cleanup must remain on-device and must not require cloud or network processing. Existing employee ID photos may be uploaded from the device, and QR images remain upload-based for a simple offline workflow.
