@@ -7,7 +7,7 @@ Date: September 4, 2026
 - Branch: `main`
 - Working implementation: saved Front/Back Layout Studio and shared PDF layout model
 - Current build: **0.7.0 / versionCode 9**
-- GitHub Actions: validation pending for the v0.7.0 commit
+- GitHub Actions: run **#75** passed compile and offline-only verification
 - APK artifact: `BarangayIDMaker-debug-apk`
 
 The user tested the earlier v0.6.0 PDF and supplied a screenshot. That screenshot is a test reference only and was **not approved as final**.
@@ -32,16 +32,15 @@ Corrections implemented in v0.7.0:
 - Retained the v0.6.1 light/dark signature cleanup and PDF-time legacy black-background repair.
 
 Required next test:
-1. Confirm the v0.7.0 GitHub Actions compile, offline-only check, and APK artifact upload succeed.
-2. Install the v0.7.0 APK.
-3. Upload the approved blank Front and Back backgrounds.
-4. Open Layout Studio, arrange both sides, save, and lock the placement.
-5. Reopen Layout Studio and confirm the saved positions remain.
-6. Generate IDs for two employees and confirm the same layout is applied to both.
-7. Confirm the black signature rectangle is gone.
-8. Confirm Important Notice and footer do not overlap.
-9. Send the new Front/Back screenshot for another layout review.
-10. Print at Actual Size / 100% and measure 85 × 115 mm before approval.
+1. Install the v0.7.0 APK from the `BarangayIDMaker-debug-apk` artifact.
+2. Upload the approved blank Front and Back backgrounds.
+3. Open Layout Studio, arrange both sides, save, and lock the placement.
+4. Reopen Layout Studio and confirm the saved positions remain.
+5. Generate IDs for two employees and confirm the same layout is applied to both.
+6. Confirm the black signature rectangle is gone.
+7. Confirm Important Notice and footer do not overlap.
+8. Send the new Front/Back screenshot for another layout review.
+9. Print at Actual Size / 100% and measure 85 × 115 mm before approval.
 
 ## Current Build Purpose
 The current build is for arranging one reusable professional composition and applying it uniformly to a planned 200-ID batch, while preserving the corrected **85 × 115 mm portrait ID**, user-controlled outlines, and consistent typography.

@@ -30,7 +30,8 @@ Saved mobile layout workflow for repeatable batch production.
 
 ### Version and validation
 - Android version bumped to **0.7.0 / versionCode 9**.
-- GitHub Actions compile, offline-only verification, and APK artifact validation are required before release handoff.
+- GitHub Actions run **#75** passed the debug APK compile, offline-only merged-manifest verification, and `BarangayIDMaker-debug-apk` artifact upload.
+- Visual placement still requires the user's generated-PDF screenshot review and an Actual Size / 100% test print before it is called final.
 
 ## 0.6.1 — September 4, 2026
 
