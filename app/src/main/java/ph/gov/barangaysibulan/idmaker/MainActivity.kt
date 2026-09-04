@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
                                 onSettings = { screen = AppScreen.SETTINGS }
                             )
                             AppScreen.RECORDS -> RecordsScreen()
-                            AppScreen.GENERATE -> PlaceholderScreen("Generate ID", "Fixed CR80 front/back renderer + A4 PDF comes next.")
+                            AppScreen.GENERATE -> GenerateScreen()
                             AppScreen.SETTINGS -> SettingsScreen()
                         }
                     }
