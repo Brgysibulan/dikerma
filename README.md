@@ -1,9 +1,25 @@
 # Barangay ID Maker
 
-Offline Android ID maker for Barangay Sibulan.
+## App Description — v0.3.0
+A **fully offline Android Barangay Employee ID Maker** for Barangay Sibulan. The app manages employee records locally, accepts ID photos from Camera or Gallery/files, performs on-device plain-background cleanup to white, cleans employee signatures to transparent PNG, stores uploaded WEBV3LITE QR images, and generates print-ready A4 PDFs using the fixed Barangay Sibulan cutting layout.
+
+The current ID format is **CR80 portrait (53.98 × 85.60 mm)**. The employee photo frame is **30 × 35 mm**, center-cropped to preserve face proportions. The front and back ID content now uses the refined formal Barangay Employee ID wording, while the physical A4 slot positions and cut guides remain locked to the Publisher-matched print template.
+
+## Current Testing Note — September 4, 2026
+Current version: **0.3.0 / versionCode 4**.
+
+- Front ID now includes Republic, Province, Municipality, Barangay, Barangay Employee ID title, 30 × 35 mm employee photo, Name, Designation, ID No., Cardholder's Signature, uploaded QR image, Scan to Verify, and Verify ID Validity.
+- Back ID now includes Date of Birth, Address, Sex, Civil Status, identification statement, Issued By, Approved By, Punong Barangay signature/name/title, Important Notice, and Barangay contact footer.
+- QR remains **upload-based**; no in-app QR generator is required.
+- ID photo can come from **Camera or Gallery / Upload** and is processed fully offline.
+- Signature/document-like images are rejected from the ID Photo workflow. Existing records showing **Invalid — replace photo** must have their ID photo replaced in Records before PDF generation.
+- The 4-slot A4 layout is unchanged: Slot 1 = Person 1 Front, Slot 2 = Person 1 Back, Slot 3 = Person 2 Front, Slot 4 = Person 2 Back.
+- Paper slot size remains approximately **85.01 × 115.05 mm** with visible cut lines.
+- Print using **Actual Size / 100%**. Do not use **Fit to Page**.
+- During testing, check the actual printed photo position, name/designation spacing, QR size, signature position, back-ID notice spacing, and footer readability before treating the visual layout as final.
 
 ## Current Status
-The app is already able to manage employee ID data offline and generate a print-ready A4 PDF. The latest build also includes the corrected paper-slot layout based on the actual `ID SIZE.pub` print template plus fully offline photo and signature cleanup.
+The app is already able to manage employee ID data offline and generate a print-ready A4 PDF. The latest build includes the corrected Publisher-matched paper-slot layout, fully offline photo/signature cleanup, invalid-photo protection, and the refined v0.3.0 front/back employee ID content.
 
 ## Offline-Only Policy
 This app is intentionally designed to work without internet access after installation.
@@ -27,6 +43,7 @@ This app is intentionally designed to work without internet access after install
 - Processed image preview before saving the employee record
 - Automatic correction of common image-orientation metadata before processing
 - Safe cleanup of obsolete app-generated processed images when replacing, clearing, cancelling or deleting records
+- Invalid ID-photo protection for signature/document-like images
 - WEBV3LITE QR image can be uploaded per employee and placed on the printed ID
 - Stored Logo 1 and Logo 2
 - Stored Punong Barangay name, position and signature
@@ -36,6 +53,8 @@ This app is intentionally designed to work without internet access after install
 - No broad storage, camera, contacts, location, microphone, notification, or internet permission
 - A4 portrait PDF generation
 - Supports 1 or 2 persons per A4 sheet
+- Refined formal front/back Barangay Employee ID content
+- Exact 30 × 35 mm employee photo frame inside the CR80 card
 - Print instruction: use **Actual Size / 100%** and do not use **Fit to Page**
 
 ## ID Photo Input: Camera or Existing Photo Upload
@@ -68,8 +87,8 @@ Processing happens fully on-device:
 3. It removes the edge-connected plain background.
 4. It replaces the removed background with **pure white**.
 5. It detects the remaining subject area.
-6. It auto-crops and centers the result into a square ID-photo image.
-7. It stores only the processed result in the employee record.
+6. It auto-crops and centers the processed result.
+7. The PDF renderer center-crops the saved photo into the exact **30 × 35 mm** ID-photo frame without stretching the face.
 8. A processed preview is shown so the user can retake or choose another image if the edges do not look clean.
 
 This uses deterministic local image processing and does not upload the photo to any cloud service.
@@ -110,6 +129,33 @@ To avoid unnecessary storage buildup:
 
 ## QR Workflow
 QR generation is intentionally not required inside the app. The preferred workflow is to upload the employee's existing WEBV3LITE QR image. The uploaded QR image is stored with the employee record and used in the generated ID PDF.
+
+## Refined ID Content — v0.3.0
+### Front ID
+- Republic of the Philippines
+- Province of Davao del Sur
+- Municipality of Sta. Cruz
+- Barangay Sibulan
+- **BARANGAY EMPLOYEE ID**
+- **30 × 35 mm** employee photo
+- Name
+- Designation
+- ID No.
+- Employee signature with **CARDHOLDER'S SIGNATURE** label
+- **SCAN TO VERIFY**
+- Uploaded QR image
+- **VERIFY ID VALIDITY**
+
+### Back ID
+- Date of Birth
+- Address
+- Sex
+- Civil Status
+- Formal identification statement confirming the bearer as a bona fide employee of the Barangay Local Government Unit of Sibulan
+- **ISSUED BY: BLGU - SIBULAN**
+- **APPROVED BY** with Punong Barangay signature, name and title
+- **IMPORTANT NOTICE** covering non-transferability, BLGU ownership, loss reporting, and unauthorized use
+- Footer with Barangay Hall address, email and contact number
 
 ## ID Size
 The actual employee ID remains CR80 portrait size:
@@ -158,7 +204,7 @@ These values are intentionally fixed so the generated PDF stays consistent with 
 Each 85.01 × 115.05 mm paper slot has a visible rectangular guide line. This is included so the printed sheet can be cut more easily and consistently using scissors, a cutter or a paper trimmer.
 
 ## App Icon
-The Android launcher icon now uses:
+The Android launcher icon uses:
 
 - Green background
 - White capital **B**
@@ -177,29 +223,26 @@ The Android launcher icon now uses:
 - Cleanup is restricted to the app's own processed-image directory; original Gallery/file uploads are not deleted.
 - Standardized the shared-preference keys used by the settings helper so they match the active Settings and PDF-generation flow.
 - Disabled Android application backup to better enforce the intended local-only data policy.
+- Added invalid-photo checks so signature/document-like images cannot be used as an employee ID photo.
 - Kept the QR workflow upload-based; no in-app QR generator was added.
 - Kept all Publisher-matched A4 slot coordinates and cutting guides unchanged.
-- GitHub Actions successfully compiled the updated app and passed the offline-only manifest verification after these fixes.
+- GitHub Actions compiles the app and checks that the final merged manifest remains offline-only.
 
 ## Latest Adjustments — September 4, 2026
-- Corrected the PDF layout from a tight CR80 2×2 block to the actual Publisher-based paper-slot layout
-- Changed the print logic to use **4 fixed 85.01 × 115.05 mm paper slots**
+- Refined the complete front and back Barangay Employee ID wording and placement
+- Added exact **30 × 35 mm** ID photo frame
+- Changed photo rendering to center-crop instead of stretching
+- Added formal Name, Designation, ID No., Cardholder's Signature and QR verification labels
+- Added refined back-ID identification statement and Important Notice
+- Added Barangay contact footer
+- Added invalid-photo protection for existing and newly processed employee records
+- Corrected the PDF layout to the actual Publisher-based paper-slot layout
 - Kept the actual ID at **53.98 × 85.60 mm CR80 portrait size**
-- Centered each CR80 ID inside its paper slot
-- Added visible cutting lines around all four paper slots
+- Kept visible cutting lines around all four paper slots
 - Confirmed the correct front/back pairing for two people per sheet
 - Added green launcher icon with a white **B**
-- Connected normal and round launcher icons in the Android manifest
 - Locked the application to **offline-only** operation by explicitly removing `android.permission.INTERNET`
-- Added a GitHub Actions build check that fails if INTERNET permission appears in the final merged Android manifests
 - Added Camera and Gallery actions for ID photos and signatures
-- Documented that an existing ID photo may be uploaded instead of taking a new camera photo
-- Confirmed that camera photos and uploaded photos use the same offline white-background cleanup pipeline
-- Added offline plain-background detection for ID photos
-- Added automatic white-background replacement and square auto-crop for ID photos
-- Added offline light-paper removal and transparent PNG generation for signatures
-- Added processed previews and retake/replace workflow
-- Added private local file storage and FileProvider support for processed images and temporary camera captures
 - Kept QR handling simple: upload the existing WEBV3LITE QR image instead of requiring in-app QR generation
 
 ## Build and APK
@@ -215,4 +258,4 @@ To get the latest APK:
 6. Download **BarangayIDMaker-debug-apk**
 
 ## Current Direction
-The app remains a fully offline Barangay ID Maker. The print layout is locked to the real paper template so future ID-design changes should not alter the physical A4 slot positions or cutting guides unless the paper template itself changes. Photo and signature cleanup must remain on-device and must not require cloud or network processing. Existing employee ID photos may be uploaded from the device, and QR images remain upload-based for a simple offline workflow.
+The app remains a fully offline Barangay ID Maker. The print layout is locked to the real paper template so future ID-design changes should not alter the physical A4 slot positions or cutting guides unless the paper template itself changes. Photo and signature cleanup must remain on-device and must not require cloud or network processing. Existing employee ID photos may be uploaded from the device, QR images remain upload-based, and the v0.3.0 visual layout should be validated through actual PDF/print testing before finalizing spacing and typography.
