@@ -20,5 +20,6 @@ data class Employee(
     val photoUri: String? = null,
     val signatureUri: String? = null,
     val qrToken: String? = null,
+    val qrImageUri: String? = null,
     val status: String = "Active"
 )
