@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.3.0 — September 4, 2026
+
+Refined CR80 front/back employee ID content and placement for actual printing.
+
+### Front ID
+- Uses the saved Republic, Province, Municipality and Barangay headings.
+- Keeps **BARANGAY EMPLOYEE ID** as the main title.
+- Employee ID photo frame is now exactly **30 × 35 mm** inside the 53.98 × 85.60 mm CR80 card.
+- Photo is center-cropped into the 30 × 35 mm frame so the face is not stretched.
+- Uses the formal labels **Name**, **Designation** and **ID No.**
+- Employee signature area is labeled **CARDHOLDER'S SIGNATURE**.
+- QR section uses **SCAN TO VERIFY** and **VERIFY ID VALIDITY**.
+
+### Back ID
+- Uses **DATE OF BIRTH**, **ADDRESS**, **SEX** and **CIVIL STATUS**.
+- Added the refined identification statement:
+  - The card is issued to the bearer whose photograph appears herein and who is a bona fide employee of the Barangay Local Government Unit of Sibulan.
+- Added **ISSUED BY: BLGU - SIBULAN**.
+- Added **APPROVED BY**, Punong Barangay signature, name and title.
+- Added **IMPORTANT NOTICE** with non-transferable, BLGU property, loss reporting and unauthorized-use wording.
+- Added footer defaults:
+  - Barangay Hall, Sitio Centro, Barangay Sibulan, Sta. Cruz, Davao del Sur
+  - brgysibulan8001@gmail.com
+  - 0970 972 3363
+
+### Locked print layout — unchanged
+- A4 page remains 210 × 297 mm portrait.
+- Paper slots remain approximately 85.01 × 115.05 mm.
+- CR80 card remains exactly 53.98 × 85.60 mm.
+- Slot 1 = Person 1 Front.
+- Slot 2 = Person 1 Back.
+- Slot 3 = Person 2 Front.
+- Slot 4 = Person 2 Back.
+- Existing Publisher-matched slot positions and cut lines remain unchanged.
+- Print at **Actual Size / 100%**.
+
+### Version
+- Android version bumped to `0.3.0` / versionCode 4.
+
 ## 0.2.1 — September 4, 2026
 
 Hotfix for invalid Person 1 / Person 2 photo content during PDF generation.
