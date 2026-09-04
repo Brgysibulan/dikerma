@@ -39,14 +39,17 @@ fun TightPortraitGenerateScreen() {
     var secondMenu by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
 
-    LaunchedEffect(employees) {
+    LaunchedEffect(employees, firstId) {
         if (firstId == null && employees.isNotEmpty()) firstId = employees.first().id
         if (firstId != null && employees.none { it.id == firstId }) firstId = employees.firstOrNull()?.id
         if (secondId != null && employees.none { it.id == secondId }) secondId = null
+        if (secondId != null && secondId == firstId) secondId = null
     }
 
     val first = employees.firstOrNull { it.id == firstId }
     val second = employees.firstOrNull { it.id == secondId }
+    val frontReady = !prefs.getString("front_template_uri", null).isNullOrBlank()
+    val backReady = !prefs.getString("back_template_uri", null).isNullOrBlank()
 
     val createPdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
         if (uri != null && first != null) {
@@ -83,6 +86,7 @@ fun TightPortraitGenerateScreen() {
                         text = { Text("${employee.fullName} • ${employee.controlNumber}") },
                         onClick = {
                             firstId = employee.id
+                            if (secondId == employee.id) secondId = null
                             firstMenu = false
                             message = ""
                         }
@@ -104,7 +108,7 @@ fun TightPortraitGenerateScreen() {
                         secondMenu = false
                     }
                 )
-                employees.forEach { employee ->
+                employees.filter { it.id != firstId }.forEach { employee ->
                     DropdownMenuItem(
                         text = { Text("${employee.fullName} • ${employee.controlNumber}") },
                         onClick = {
@@ -113,6 +117,22 @@ fun TightPortraitGenerateScreen() {
                             message = ""
                         }
                     )
+                }
+            }
+        }
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Ready Check", fontWeight = FontWeight.Bold)
+                Text("Front design: ${if (frontReady) "Ready" else "Missing — fallback design will be used"}")
+                Text("Back design: ${if (backReady) "Ready" else "Missing — fallback design will be used"}")
+                first?.let {
+                    Text("Person 1 photo: ${if (!it.photoUri.isNullOrBlank()) "Ready" else "Missing"}")
+                    Text("Person 1 QR: ${if (!it.qrImageUri.isNullOrBlank()) "Ready" else "Missing"}")
+                }
+                second?.let {
+                    Text("Person 2 photo: ${if (!it.photoUri.isNullOrBlank()) "Ready" else "Missing"}")
+                    Text("Person 2 QR: ${if (!it.qrImageUri.isNullOrBlank()) "Ready" else "Missing"}")
                 }
             }
         }
@@ -153,6 +173,7 @@ private const val SLOT_TOP_1_MM = 14.77f
 private const val SLOT_TOP_2_MM = 168.62f
 private const val CARD_W_MM = 53.98f
 private const val CARD_H_MM = 85.60f
+private const val TIGHT_MAX_BITMAP_SIDE = 1800
 
 private fun mm(value: Float): Float = value * TIGHT_PT_PER_MM
 
@@ -239,7 +260,13 @@ private fun tightDrawFront(context: Context, canvas: Canvas, r: RectF, e: Employ
     tightTextFit(canvas, prefs.getString("id_heading", "BARANGAY EMPLOYEE ID") ?: "BARANGAY EMPLOYEE ID", r.centerX(), r.top + 31f, r.width() - 28f, text, 8.5f, 5.2f)
 
     val photoRect = RectF(r.left + 37f, r.top + 48f, r.right - 37f, r.top + 137f)
-    tightLoadBitmap(context, e.photoUri)?.let { canvas.drawBitmap(it, null, photoRect, p) } ?: tightLabeledBox(canvas, photoRect, "PHOTO")
+    val photo = tightLoadBitmap(context, e.photoUri)
+    if (photo != null) {
+        canvas.drawBitmap(photo, null, photoRect, p)
+        photo.recycleSafely()
+    } else {
+        tightLabeledBox(canvas, photoRect, "PHOTO")
+    }
 
     tightTextFit(canvas, e.fullName, r.centerX(), r.top + 154f, r.width() - 18f, text, 10.5f, 6f)
     text.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
@@ -247,10 +274,19 @@ private fun tightDrawFront(context: Context, canvas: Canvas, r: RectF, e: Employ
     tightTextFit(canvas, "ID NO. ${e.controlNumber}", r.centerX(), r.top + 184f, r.width() - 18f, text, 7.5f, 5.2f)
 
     val sigRect = RectF(r.left + 16f, r.bottom - 50f, r.left + 82f, r.bottom - 25f)
-    tightLoadBitmap(context, e.signatureUri)?.let { canvas.drawBitmap(it, null, sigRect, p) }
+    tightLoadBitmap(context, e.signatureUri)?.let { bitmap ->
+        canvas.drawBitmap(bitmap, null, sigRect, p)
+        bitmap.recycleSafely()
+    }
 
     val qrRect = RectF(r.right - 51f, r.bottom - 56f, r.right - 10f, r.bottom - 15f)
-    tightLoadBitmap(context, e.qrImageUri)?.let { canvas.drawBitmap(it, null, qrRect, p) } ?: tightLabeledBox(canvas, qrRect, "QR")
+    val qr = tightLoadBitmap(context, e.qrImageUri)
+    if (qr != null) {
+        canvas.drawBitmap(qr, null, qrRect, p)
+        qr.recycleSafely()
+    } else {
+        tightLabeledBox(canvas, qrRect, "QR")
+    }
 }
 
 private fun tightDrawBack(context: Context, canvas: Canvas, r: RectF, e: Employee, prefs: SharedPreferences) {
@@ -278,7 +314,10 @@ private fun tightDrawBack(context: Context, canvas: Canvas, r: RectF, e: Employe
     tightTextFit(canvas, "APPROVED BY:", x, r.bottom - 78f, r.width() - 24f, text, 7.2f, 5f)
 
     val sigRect = RectF(x, r.bottom - 72f, x + 82f, r.bottom - 42f)
-    tightLoadBitmap(context, prefs.getString("captain_signature_uri", null))?.let { canvas.drawBitmap(it, null, sigRect, p) }
+    tightLoadBitmap(context, prefs.getString("captain_signature_uri", null))?.let { bitmap ->
+        canvas.drawBitmap(bitmap, null, sigRect, p)
+        bitmap.recycleSafely()
+    }
 
     val captain = prefs.getString("captain_name", "")?.ifBlank { "PUNONG BARANGAY" } ?: "PUNONG BARANGAY"
     tightTextFit(canvas, captain, x, r.bottom - 28f, r.width() - 24f, text, 8f, 5.2f)
@@ -290,6 +329,7 @@ private fun tightDrawTemplate(context: Context, canvas: Canvas, r: RectF, uri: S
     val bitmap = tightLoadBitmap(context, uri)
     if (bitmap != null) {
         tightCenterCrop(canvas, bitmap, r)
+        bitmap.recycleSafely()
         return
     }
     val p = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -318,13 +358,14 @@ private fun tightCenterCrop(canvas: Canvas, bitmap: Bitmap, target: RectF) {
         val top = ((bitmap.height - newH) / 2).coerceAtLeast(0)
         Rect(0, top, bitmap.width, (top + newH).coerceAtMost(bitmap.height))
     }
-    canvas.drawBitmap(bitmap, src, target, Paint(Paint.ANTI_ALIAS_FLAG))
+    canvas.drawBitmap(bitmap, src, target, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
 }
 
 private fun tightDrawLogoOrB(context: Context, canvas: Canvas, r: RectF, uri: String?) {
     val bitmap = tightLoadBitmap(context, uri)
     if (bitmap != null) {
-        canvas.drawBitmap(bitmap, null, r, Paint(Paint.ANTI_ALIAS_FLAG))
+        canvas.drawBitmap(bitmap, null, r, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+        bitmap.recycleSafely()
         return
     }
     val p = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -357,9 +398,42 @@ private fun tightTextFit(canvas: Canvas, value: String, x: Float, y: Float, maxW
     canvas.drawText(text, x, y, paint)
 }
 
-private fun tightLoadBitmap(context: Context, uri: String?): Bitmap? {
-    if (uri.isNullOrBlank()) return null
+private fun tightLoadBitmap(context: Context, uriString: String?): Bitmap? {
+    if (uriString.isNullOrBlank()) return null
     return runCatching {
-        context.contentResolver.openInputStream(Uri.parse(uri))?.use { BitmapFactory.decodeStream(it) }
+        val uri = Uri.parse(uriString)
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@runCatching null
+
+        var sample = 1
+        while (maxOf(bounds.outWidth / sample, bounds.outHeight / sample) > TIGHT_MAX_BITMAP_SIDE * 2) {
+            sample *= 2
+        }
+
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = sample
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+        val decoded = context.contentResolver.openInputStream(uri)?.use {
+            BitmapFactory.decodeStream(it, null, options)
+        } ?: return@runCatching null
+
+        val maxSide = maxOf(decoded.width, decoded.height)
+        if (maxSide <= TIGHT_MAX_BITMAP_SIDE) return@runCatching decoded
+
+        val scale = TIGHT_MAX_BITMAP_SIDE.toFloat() / maxSide.toFloat()
+        val scaled = Bitmap.createScaledBitmap(
+            decoded,
+            maxOf(1, (decoded.width * scale).toInt()),
+            maxOf(1, (decoded.height * scale).toInt()),
+            true
+        )
+        if (scaled !== decoded) decoded.recycleSafely()
+        scaled
     }.getOrNull()
+}
+
+private fun Bitmap.recycleSafely() {
+    if (!isRecycled) recycle()
 }
