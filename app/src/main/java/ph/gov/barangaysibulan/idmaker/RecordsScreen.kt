@@ -1,8 +1,10 @@
 package ph.gov.barangaysibulan.idmaker
 
 import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +18,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -177,32 +181,85 @@ private fun EmployeeEditorScreen(
         var message by remember { mutableStateOf("") }
         var saving by remember { mutableStateOf(false) }
 
+        var photoProcessing by remember { mutableStateOf(false) }
+        var signatureProcessing by remember { mutableStateOf(false) }
+        var photoMessage by remember { mutableStateOf("") }
+        var signatureMessage by remember { mutableStateOf("") }
+        var pendingPhotoCamera by remember { mutableStateOf<CameraTarget?>(null) }
+        var pendingSignatureCamera by remember { mutableStateOf<CameraTarget?>(null) }
+
         fun keepUri(uriString: String) {
             if (uriString.isBlank()) return
             runCatching {
                 context.contentResolver.takePersistableUriPermission(
-                    android.net.Uri.parse(uriString),
+                    Uri.parse(uriString),
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
             }
         }
 
-        val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let {
-                photoUri = it.toString()
-                keepUri(photoUri)
+        fun processPhoto(source: Uri, cameraTarget: CameraTarget? = null) {
+            photoProcessing = true
+            photoMessage = "Processing photo fully offline…"
+            scope.launch {
+                val result = runCatching { OfflineImageProcessor.processIdPhoto(context, source) }.getOrNull()
+                cameraTarget?.file?.delete()
+                if (result != null) {
+                    photoUri = result.uri
+                    photoMessage = result.note
+                } else {
+                    photoMessage = "Could not separate the background. Retake using a plain solid background with even lighting."
+                }
+                photoProcessing = false
             }
         }
-        val signaturePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let {
-                signatureUri = it.toString()
-                keepUri(signatureUri)
+
+        fun processSignature(source: Uri, cameraTarget: CameraTarget? = null) {
+            signatureProcessing = true
+            signatureMessage = "Processing signature fully offline…"
+            scope.launch {
+                val result = runCatching { OfflineImageProcessor.processSignature(context, source) }.getOrNull()
+                cameraTarget?.file?.delete()
+                if (result != null) {
+                    signatureUri = result.uri
+                    signatureMessage = result.note
+                } else {
+                    signatureMessage = "Could not detect the signature clearly. Use black/dark ink on clean white or light paper and retake."
+                }
+                signatureProcessing = false
             }
+        }
+
+        val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let { processPhoto(it) }
+        }
+        val signaturePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let { processSignature(it) }
         }
         val qrImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             uri?.let {
                 qrImageUri = it.toString()
                 keepUri(qrImageUri)
+            }
+        }
+
+        val photoCamera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            val target = pendingPhotoCamera
+            pendingPhotoCamera = null
+            if (success && target != null) {
+                processPhoto(target.uri, target)
+            } else {
+                target?.file?.delete()
+            }
+        }
+
+        val signatureCamera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            val target = pendingSignatureCamera
+            pendingSignatureCamera = null
+            if (success && target != null) {
+                processSignature(target.uri, target)
+            } else {
+                target?.file?.delete()
             }
         }
 
@@ -216,7 +273,7 @@ private fun EmployeeEditorScreen(
             ) {
                 Column {
                     Text(if (employee == null) "Add Employee" else "Edit Employee", style = MaterialTheme.typography.headlineSmall)
-                    Text("Employee information is stored only on this device.", style = MaterialTheme.typography.bodySmall)
+                    Text("Employee information and image processing stay only on this device.", style = MaterialTheme.typography.bodySmall)
                 }
             }
 
@@ -246,17 +303,61 @@ private fun EmployeeEditorScreen(
                 item {
                     HorizontalDivider()
                     Spacer(Modifier.height(6.dp))
-                    Text("Photo & Signature", style = MaterialTheme.typography.titleMedium)
+                    Text("Photo & Signature — Offline Auto Cleanup", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "ID photo: use a plain solid-color background. Signature: use black/dark ink on clean white or light paper.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
+
                 item {
-                    EmployeeAssetRow("1×1 Photo", photoUri.isNotBlank()) {
-                        photoPicker.launch(arrayOf("image/*"))
-                    }
+                    ProcessedAssetCard(
+                        title = "ID Photo",
+                        instruction = "The app removes the plain background, replaces it with pure white, then auto-crops the photo.",
+                        uriString = photoUri,
+                        processing = photoProcessing,
+                        statusText = photoMessage,
+                        onCamera = {
+                            runCatching {
+                                OfflineImageProcessor.createCameraTarget(context, "id_photo_")
+                            }.onSuccess { target ->
+                                pendingPhotoCamera = target
+                                photoCamera.launch(target.uri)
+                            }.onFailure {
+                                photoMessage = "Could not open a camera target on this device."
+                            }
+                        },
+                        onGallery = { photoPicker.launch(arrayOf("image/*")) },
+                        onClear = {
+                            photoUri = ""
+                            photoMessage = "Photo cleared."
+                        }
+                    )
                 }
+
                 item {
-                    EmployeeAssetRow("Employee Signature PNG", signatureUri.isNotBlank()) {
-                        signaturePicker.launch(arrayOf("image/*"))
-                    }
+                    ProcessedAssetCard(
+                        title = "Employee Signature",
+                        instruction = "The app removes the light paper/background, keeps the dark signature, auto-crops it, and saves transparent PNG.",
+                        uriString = signatureUri,
+                        processing = signatureProcessing,
+                        statusText = signatureMessage,
+                        onCamera = {
+                            runCatching {
+                                OfflineImageProcessor.createCameraTarget(context, "signature_")
+                            }.onSuccess { target ->
+                                pendingSignatureCamera = target
+                                signatureCamera.launch(target.uri)
+                            }.onFailure {
+                                signatureMessage = "Could not open a camera target on this device."
+                            }
+                        },
+                        onGallery = { signaturePicker.launch(arrayOf("image/*")) },
+                        onClear = {
+                            signatureUri = ""
+                            signatureMessage = "Signature cleared."
+                        }
+                    )
                 }
 
                 item {
@@ -296,7 +397,7 @@ private fun EmployeeEditorScreen(
                 OutlinedButton(
                     onClick = onCancel,
                     modifier = Modifier.weight(1f),
-                    enabled = !saving
+                    enabled = !saving && !photoProcessing && !signatureProcessing
                 ) { Text("Cancel") }
 
                 Button(
@@ -339,8 +440,72 @@ private fun EmployeeEditorScreen(
                         }
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = !saving
+                    enabled = !saving && !photoProcessing && !signatureProcessing
                 ) { Text(if (saving) "Saving…" else "Save Employee") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProcessedAssetCard(
+    title: String,
+    instruction: String,
+    uriString: String,
+    processing: Boolean,
+    statusText: String,
+    onCamera: () -> Unit,
+    onGallery: () -> Unit,
+    onClear: () -> Unit
+) {
+    val context = LocalContext.current
+    val preview = remember(uriString) {
+        if (uriString.isBlank()) null else OfflineImageProcessor.loadPreview(context, uriString)
+    }
+
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(instruction, style = MaterialTheme.typography.bodySmall)
+
+            if (preview != null) {
+                Image(
+                    bitmap = preview.asImageBitmap(),
+                    contentDescription = "$title processed preview",
+                    modifier = Modifier.fillMaxWidth().height(170.dp),
+                    contentScale = ContentScale.Fit
+                )
+                Text("Processed preview", style = MaterialTheme.typography.labelMedium)
+            } else {
+                Text("No processed image yet", style = MaterialTheme.typography.bodySmall)
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onCamera,
+                    enabled = !processing,
+                    modifier = Modifier.weight(1f)
+                ) { Text(if (processing) "Processing…" else "Camera") }
+
+                OutlinedButton(
+                    onClick = onGallery,
+                    enabled = !processing,
+                    modifier = Modifier.weight(1f)
+                ) { Text("Gallery") }
+            }
+
+            if (uriString.isNotBlank()) {
+                TextButton(onClick = onClear, enabled = !processing) { Text("Clear") }
+            }
+
+            if (statusText.isNotBlank()) {
+                Text(statusText, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
