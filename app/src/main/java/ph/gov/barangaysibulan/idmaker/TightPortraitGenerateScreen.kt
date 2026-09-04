@@ -51,6 +51,14 @@ fun TightPortraitGenerateScreen() {
     val frontReady = !prefs.getString("front_template_uri", null).isNullOrBlank()
     val backReady = !prefs.getString("back_template_uri", null).isNullOrBlank()
 
+    val firstPhotoValid = remember(first?.photoUri) {
+        first?.photoUri?.let { OfflineImageProcessor.isLikelyIdPhoto(context, it) } ?: false
+    }
+    val secondPhotoValid = remember(second?.photoUri) {
+        second?.photoUri?.let { OfflineImageProcessor.isLikelyIdPhoto(context, it) } ?: false
+    }
+    val photosReady = first != null && firstPhotoValid && (second == null || secondPhotoValid)
+
     val createPdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
         if (uri != null && first != null) {
             message = if (writeTightPortraitPdf(context, uri, first, second, prefs)) {
@@ -127,13 +135,42 @@ fun TightPortraitGenerateScreen() {
                 Text("Front design: ${if (frontReady) "Ready" else "Missing — fallback design will be used"}")
                 Text("Back design: ${if (backReady) "Ready" else "Missing — fallback design will be used"}")
                 first?.let {
-                    Text("Person 1 photo: ${if (!it.photoUri.isNullOrBlank()) "Ready" else "Missing"}")
+                    Text(
+                        "Person 1 photo: " + when {
+                            it.photoUri.isNullOrBlank() -> "Missing"
+                            firstPhotoValid -> "Ready"
+                            else -> "Invalid — replace photo"
+                        }
+                    )
                     Text("Person 1 QR: ${if (!it.qrImageUri.isNullOrBlank()) "Ready" else "Missing"}")
                 }
                 second?.let {
-                    Text("Person 2 photo: ${if (!it.photoUri.isNullOrBlank()) "Ready" else "Missing"}")
+                    Text(
+                        "Person 2 photo: " + when {
+                            it.photoUri.isNullOrBlank() -> "Missing"
+                            secondPhotoValid -> "Ready"
+                            else -> "Invalid — replace photo"
+                        }
+                    )
                     Text("Person 2 QR: ${if (!it.qrImageUri.isNullOrBlank()) "Ready" else "Missing"}")
                 }
+            }
+        }
+
+        if (first != null && !firstPhotoValid) {
+            Card(Modifier.fillMaxWidth()) {
+                Text(
+                    "Person 1 has an invalid ID photo. A signature/document-like image may have been saved in the photo field. Open Records, edit ${first.fullName}, and replace the ID Photo before generating.",
+                    Modifier.padding(14.dp)
+                )
+            }
+        }
+        if (second != null && !secondPhotoValid) {
+            Card(Modifier.fillMaxWidth()) {
+                Text(
+                    "Person 2 has an invalid ID photo. Open Records and replace that employee's ID Photo before generating.",
+                    Modifier.padding(14.dp)
+                )
             }
         }
 
@@ -151,10 +188,15 @@ fun TightPortraitGenerateScreen() {
         first?.let { employee ->
             Button(
                 onClick = {
+                    if (!photosReady) {
+                        message = "Replace the invalid/missing ID photo before generating the PDF."
+                        return@Button
+                    }
                     val safeName = employee.fullName.replace(Regex("[^A-Za-z0-9_-]+"), "_").take(40)
                     createPdf.launch("Barangay-ID-${safeName.ifBlank { employee.controlNumber }}.pdf")
                 },
-                modifier = Modifier.fillMaxWidth().height(54.dp)
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                enabled = photosReady
             ) { Text("Generate A4 PDF") }
         }
 
