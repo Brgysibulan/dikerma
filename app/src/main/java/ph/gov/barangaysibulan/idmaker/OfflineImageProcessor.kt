@@ -222,9 +222,9 @@ internal object OfflineImageProcessor {
             ProcessedImage(
                 uri = uri,
                 note = if (spread > 48) {
-                    "Processed offline. Background had some variation; check the preview and choose another portrait if edges look rough."
+                    "Background replaced with pure white offline. The original background had some variation, so check the white preview for rough edges."
                 } else {
-                    "Processed offline: portrait validated, plain background replaced with pure white, and photo auto-cropped."
+                    "Done: plain background replaced with pure white, portrait centered, and photo auto-cropped fully offline."
                 }
             )
         } finally {

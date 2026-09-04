@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.1 — September 4, 2026
+
+User-friendly text and image cleanup controls.
+
+- Added independent per-text **Underline** controls in Layout Studio; underline is saved globally, rendered in the PDF, and off by default.
+- Renamed the ID-photo cleanup choice to **White BG (Default)** and clarified that it produces a pure-white background fully offline.
+- Renamed signature cleanup to **Transparent BG** so it is clear that signatures do not receive a white or black rectangle.
+- Added a white image-preview surface and clearer processing/result messages.
+- Preserved Keep Original behavior and existing employee records.
+- Android version bumped to **0.7.1 / versionCode 10**.
+- Automated build, offline-only verification, and APK artifact validation are required before release handoff.
+
 ## 0.7.0 — September 4, 2026
 
 Saved mobile layout workflow for repeatable batch production.

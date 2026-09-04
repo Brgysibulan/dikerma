@@ -1,30 +1,30 @@
 # Barangay ID Maker
 
-## App Description — v0.7.0
+## App Description — v0.7.1
 A **fully offline Android Barangay Employee ID Maker** for Barangay Sibulan. The app stores employee records on-device, accepts employee photos and signatures from Camera or Gallery/files, supports optional offline background cleanup, stores uploaded WEBV3LITE QR images, and generates print-ready A4 PDFs for front/back employee IDs.
 
 The current physical ID size is **85 mm × 115 mm portrait** for both the front and back. The uploaded front/back artwork is treated as the actual visual background. The app should only place dynamic data on top of that artwork unless no background design has been uploaded.
 
 ## Current Version
-- Version name: **0.7.0**
-- Version code: **9**
+- Version name: **0.7.1**
+- Version code: **10**
 - Android minSdk: 26
 - Android targetSdk: 35
 
 ## Continuation Status — September 4, 2026
-The generated-PDF screenshots were reviewed and were **not approved as the final visual layout**. Version 0.7.0 adds a saved mobile Layout Studio so the overlay placement can be adjusted to the uploaded artwork instead of relying on one hardcoded composition.
+The generated-PDF screenshots were reviewed and were **not approved as the final visual layout**. Version 0.7.1 keeps the saved mobile Layout Studio and adds per-text underlining plus clearer white-background photo cleanup controls.
 
 Latest completed work:
 - Added Front/Back **Layout Studio** with a live 85 × 115 mm template preview.
 - Added touch drag placement plus sliders for exact horizontal/vertical position and element size.
-- Added per-text size, alignment, color, visibility, outline on/off, and outline-thickness controls.
+- Added per-text size, alignment, color, visibility, underline on/off, outline on/off, and outline-thickness controls.
 - Added overlap warnings for critical Front and Back sections.
 - Added layout locking, per-side professional reset, and one **Save placement • Apply to all IDs** action.
 - Saved coordinates use millimetres inside the physical card and are reused for every employee, including both people on the A4 sheet.
 - Removed the duplicate Punong Barangay signatory block from the bottom of the Front ID.
 - Preserved the v0.6.1 signature cleanup, full-month DOB formatting, background-first rendering, and independent outline controls.
 
-GitHub Actions run **#75** passed the debug APK compile, offline-only verification, and `BarangayIDMaker-debug-apk` artifact upload. The next continuation step is to install the v0.7.0 APK, arrange and lock one layout, then generate a new PDF using the same employee/template data. Do not describe the layout as visually final until the user approves the screenshots and Actual Size / 100% test print.
+Version 0.7.1 automated validation is required before release handoff. After installation, arrange and lock one layout, then generate a new PDF using the same employee/template data. Do not describe the layout as visually final until the user approves the screenshots and Actual Size / 100% test print.
 
 ## Locked Physical ID Size
 Each generated front/back ID is:
@@ -110,7 +110,7 @@ User-friendly workflow:
 2. Open **Settings → Arrange Front & Back**.
 3. Choose the Front or Back tab.
 4. Tap and drag an overlay, or use the position and size sliders for fine adjustment.
-5. Adjust text size, alignment, black/white/green color, visibility, and optional text outline for the selected text item.
+5. Adjust text size, alignment, black/white/green color, visibility, underline, and optional text outline for the selected text item.
 6. Review automatic warnings for critical collisions such as QR versus Employee No. or Important Notice versus footer.
 7. Turn on **Lock placement after saving** when the composition is ready.
 8. Tap **Save placement • Apply to all IDs**.
@@ -124,6 +124,7 @@ Technical behavior:
 - A professional default is available separately for Front and Back.
 - QR rendering remains proportional and its editor size stays square.
 - Text outline is controlled per text item and is **off by default**.
+- Underline is controlled per text item and is **off by default**.
 - Existing photo, information-divider, signature-line, QR, back-divider, and cut-guide controls remain independent.
 
 ## Employee Photo and Signature Input
@@ -134,16 +135,18 @@ Use when the app should process the selected image locally.
 
 **ID Photo**
 - Detects a plain background.
-- Replaces removed background with pure white.
+- Uses **White BG (Default)** and replaces the removed background with pure white.
 - Validates that the image resembles an ID portrait rather than a sparse signature/document image.
 - Auto-crops the detected subject.
 - Fully offline.
 
 **Employee Signature**
-- Removes a plain light or dark background.
+- Uses **Transparent BG** cleanup and removes a plain light or dark background.
 - Keeps dark signature strokes.
 - Auto-crops the signature.
 - Saves the processed result as a transparent PNG.
+
+The photo/signature screen describes the result before upload and displays the selected image on a white preview surface. White replacement applies to ID photos; signatures remain transparent so the app does not create a visible rectangle over the ID artwork.
 
 ### Keep Original
 Use when the selected file is already prepared.

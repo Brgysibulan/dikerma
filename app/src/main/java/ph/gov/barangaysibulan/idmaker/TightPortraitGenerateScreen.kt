@@ -505,6 +505,7 @@ private fun layoutPaint(
         IdTextAlignment.RIGHT -> Paint.Align.RIGHT
     }
     typeface = idTypeface(prefs, bold)
+    isUnderlineText = placement.underlineEnabled
 }
 
 private fun layoutTextX(rect: RectF, alignment: IdTextAlignment): Float = when (alignment) {

@@ -31,6 +31,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -279,6 +280,12 @@ internal fun IdLayoutEditorScreen(onClose: () -> Unit) {
                             update(selected) { current -> current.copy(textColor = it) }
                         }
                     }
+
+                    SettingsToggle(
+                        label = "Underline",
+                        checked = selectedPlacement.underlineEnabled,
+                        enabled = !locked
+                    ) { value -> update(selected) { it.copy(underlineEnabled = value) } }
 
                     SettingsToggle(
                         label = "Text outline",
@@ -537,6 +544,7 @@ private fun LayoutElementPreview(
                 fontFamily = fontFamily,
                 fontWeight = fontWeight,
                 textAlign = textAlign,
+                textDecoration = if (placement.underlineEnabled) TextDecoration.Underline else TextDecoration.None,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(drawStyle = Stroke(width = placement.textOutlineWidthPt.coerceAtLeast(0.15f) * 1.4f))
             )
@@ -549,6 +557,7 @@ private fun LayoutElementPreview(
             fontFamily = fontFamily,
             fontWeight = fontWeight,
             textAlign = textAlign,
+            textDecoration = if (placement.underlineEnabled) TextDecoration.Underline else TextDecoration.None,
             overflow = TextOverflow.Ellipsis
         )
     }

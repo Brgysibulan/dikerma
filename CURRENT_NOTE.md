@@ -1,4 +1,4 @@
-# Current Note — Barangay ID Maker v0.7.0
+# Current Note — Barangay ID Maker v0.7.1
 
 Date: September 4, 2026
 
@@ -6,8 +6,8 @@ Date: September 4, 2026
 - Repository: `Brgysibulan/dikerma`
 - Branch: `main`
 - Working implementation: saved Front/Back Layout Studio and shared PDF layout model
-- Current build: **0.7.0 / versionCode 9**
-- GitHub Actions: run **#75** passed compile and offline-only verification
+- Current build: **0.7.1 / versionCode 10**
+- GitHub Actions: validation pending for the v0.7.1 commit
 - APK artifact: `BarangayIDMaker-debug-apk`
 
 The user tested the earlier v0.6.0 PDF and supplied a screenshot. That screenshot is a test reference only and was **not approved as final**.
@@ -18,11 +18,11 @@ Observed from that screenshot:
 - The employee signature displayed as an unacceptable black rectangle.
 - The back Important Notice and footer were too dense and too close to the lower artwork.
 
-Corrections implemented in v0.7.0:
+Corrections implemented through v0.7.1:
 - Added a mobile-friendly Front/Back Layout Studio under Settings.
 - Every overlay can be tapped and dragged on a live 85 × 115 mm background preview.
 - Position and size sliders provide fine adjustment without requiring manual coordinate entry.
-- Text items have independent size, alignment, black/white/green color, visibility, text-outline on/off, and text-outline thickness.
+- Text items have independent size, alignment, black/white/green color, visibility, underline on/off, text-outline on/off, and text-outline thickness.
 - Critical overlap warnings cover Photo versus employee information, QR versus Employee No./signature, and Back section/footer collisions.
 - The QR placement remains square and the uploaded QR itself is rendered proportionally.
 - Layout can be locked to prevent accidental edits.
@@ -30,17 +30,21 @@ Corrections implemented in v0.7.0:
 - Front and Back each have a professional-default reset.
 - Removed the duplicated bottom Front signatory name/title; approval remains on the Back.
 - Retained the v0.6.1 light/dark signature cleanup and PDF-time legacy black-background repair.
+- Renamed the default ID-photo cleanup choice to **White BG (Default)** and made its pure-white result explicit before upload.
+- Kept signature cleanup transparent, with a white preview surface, so no black or white signature box is added to the ID.
 
 Required next test:
-1. Install the v0.7.0 APK from the `BarangayIDMaker-debug-apk` artifact.
-2. Upload the approved blank Front and Back backgrounds.
-3. Open Layout Studio, arrange both sides, save, and lock the placement.
-4. Reopen Layout Studio and confirm the saved positions remain.
-5. Generate IDs for two employees and confirm the same layout is applied to both.
-6. Confirm the black signature rectangle is gone.
-7. Confirm Important Notice and footer do not overlap.
-8. Send the new Front/Back screenshot for another layout review.
-9. Print at Actual Size / 100% and measure 85 × 115 mm before approval.
+1. Confirm the v0.7.1 build, offline-only check, and APK artifact upload succeed.
+2. Install the v0.7.1 APK from the `BarangayIDMaker-debug-apk` artifact.
+3. Upload the approved blank Front and Back backgrounds.
+4. Open Layout Studio, arrange both sides, save, and lock the placement.
+5. Reopen Layout Studio and confirm the saved positions remain.
+6. Generate IDs for two employees and confirm the same layout is applied to both.
+7. Confirm per-text underline is independent and off by default.
+8. Confirm the ID-photo cleanup result is pure white and the signature remains transparent.
+9. Confirm Important Notice and footer do not overlap.
+10. Send the new Front/Back screenshot for another layout review.
+11. Print at Actual Size / 100% and measure 85 × 115 mm before approval.
 
 ## Current Build Purpose
 The current build is for arranging one reusable professional composition and applying it uniformly to a planned 200-ID batch, while preserving the corrected **85 × 115 mm portrait ID**, user-controlled outlines, and consistent typography.
@@ -117,7 +121,7 @@ Most PDF text is plain text over the artwork. There are no automatic glow, shado
 - Tabs: Front and Back
 - The live preview uses the uploaded background and the first available employee record for sample values/assets.
 - Tap or drag an overlay to select and move it.
-- Fine controls: horizontal position, vertical position, width, height, text size, alignment, color, visibility, text-outline toggle, and text-outline thickness.
+- Fine controls: horizontal position, vertical position, width, height, text size, alignment, color, visibility, underline toggle, text-outline toggle, and text-outline thickness.
 - Editor-only safe guides and yellow selection borders never appear in generated PDFs.
 - Optional collision warnings call out obvious overlap risks before saving.
 - **Lock placement after saving** prevents accidental editing.
@@ -125,15 +129,18 @@ Most PDF text is plain text over the artwork. There are no automatic glow, shado
 - Positions and sizes are saved in millimetres relative to the physical 85 × 115 mm card, not screen pixels.
 - The active PDF renderer reads the same saved placement model.
 - Text outline is per text element and off by default; existing line/box controls remain separate.
+- Underline is per text element, saved with the global placement, and off by default.
 - Employee data and Room records are not modified by layout editing.
 
 ## Photo & Signature Modes
 Both ID Photo and Employee Signature support:
 
 ### Auto Clean
-- Photo: plain-background removal, white replacement, validation and auto-crop
-- Signature: plain light/dark-background removal and transparent PNG output
+- Photo: **White BG (Default)** plain-background removal, pure-white replacement, validation and auto-crop
+- Signature: **Transparent BG** plain light/dark-background removal and transparent PNG output
 - Fully offline
+
+The selected photo/signature is previewed on white. White is the replacement background for ID photos only; cleaned signatures stay transparent to prevent a printed rectangle.
 
 ### Keep Original
 - Gallery / Upload image is used without background cleanup

@@ -177,6 +177,7 @@ internal data class IdElementPlacement(
     val fontScale: Float,
     val alignment: IdTextAlignment,
     val textColor: Int,
+    val underlineEnabled: Boolean,
     val textOutlineEnabled: Boolean,
     val textOutlineWidthPt: Float,
     val visible: Boolean
@@ -203,6 +204,7 @@ internal fun IdLayoutElement.defaultPlacement(): IdElementPlacement = IdElementP
     fontScale = 1f,
     alignment = defaultAlignment,
     textColor = defaultColor,
+    underlineEnabled = false,
     textOutlineEnabled = false,
     textOutlineWidthPt = 0.35f,
     visible = true
@@ -222,6 +224,7 @@ internal class IdLayoutStore(private val prefs: SharedPreferences) {
                 ?.let { runCatching { IdTextAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.alignment,
             textColor = prefs.getInt("${prefix}_color", defaults.textColor),
+            underlineEnabled = prefs.getBoolean("${prefix}_underline", defaults.underlineEnabled),
             textOutlineEnabled = prefs.getBoolean("${prefix}_text_outline", defaults.textOutlineEnabled),
             textOutlineWidthPt = prefs.getFloat("${prefix}_text_outline_width", defaults.textOutlineWidthPt),
             visible = prefs.getBoolean("${prefix}_visible", defaults.visible)
@@ -244,6 +247,7 @@ internal class IdLayoutStore(private val prefs: SharedPreferences) {
                 .putFloat("${prefix}_font_scale", placement.fontScale)
                 .putString("${prefix}_align", placement.alignment.name)
                 .putInt("${prefix}_color", placement.textColor)
+                .putBoolean("${prefix}_underline", placement.underlineEnabled)
                 .putBoolean("${prefix}_text_outline", placement.textOutlineEnabled)
                 .putFloat("${prefix}_text_outline_width", placement.textOutlineWidthPt)
                 .putBoolean("${prefix}_visible", placement.visible)

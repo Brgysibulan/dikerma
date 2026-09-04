@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -241,7 +242,7 @@ private fun EmployeeEditorScreen(
 
         fun processPhoto(source: Uri, cameraTarget: CameraTarget? = null) {
             photoProcessing = true
-            photoMessage = "Processing photo fully offline…"
+            photoMessage = "Removing the background and replacing it with pure white—fully offline…"
             scope.launch {
                 val result = runCatching { OfflineImageProcessor.processIdPhoto(context, source) }.getOrNull()
                 cameraTarget?.file?.delete()
@@ -250,7 +251,7 @@ private fun EmployeeEditorScreen(
                     photoUri = result.uri
                     photoMessage = result.note
                 } else {
-                    photoMessage = "Could not separate the background. Try another photo with a plain solid background and even lighting, or choose Keep Original."
+                    photoMessage = "White-background cleanup could not separate the subject safely. Retake against one plain solid color with even lighting, or choose Keep Original."
                 }
                 photoProcessing = false
             }
@@ -356,7 +357,7 @@ private fun EmployeeEditorScreen(
                     Spacer(Modifier.height(6.dp))
                     Text("Photo & Signature", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Choose Auto Clean when you want the app to remove the background. Choose Keep Original when the photo/signature is already prepared and should be used as uploaded.",
+                        "For ID photos, the default cleanup result is a pure white background. Signatures are cleaned to transparency so no black or white box is printed.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -364,16 +365,18 @@ private fun EmployeeEditorScreen(
                 item {
                     ProcessedAssetCard(
                         title = "ID Photo",
-                        instruction = "Auto Clean removes a plain background and replaces it with white. Keep Original uses your uploaded ID photo without background removal.",
+                        instruction = "Choose the result for the next Camera or Gallery image. White Background is the default.",
                         uriString = photoUri,
                         processing = photoProcessing,
                         statusText = photoMessage,
                         mode = photoMode,
+                        autoModeLabel = "White BG (Default)",
+                        autoModeSummary = "Removes a plain background, replaces it with pure white, then centers and crops the ID photo. Fully offline.",
                         originalHint = "Best for an existing ID photo that already has the background you want.",
                         onModeChange = {
                             photoMode = it
                             photoMessage = if (it == AssetInputMode.AUTO_CLEAN) {
-                                "Auto Clean selected. The next Camera/Gallery image will be processed."
+                                "White Background selected. The next Camera/Gallery photo will be cleaned and placed on pure white."
                             } else {
                                 "Keep Original selected. Upload from Gallery/Files; the image will not be cleaned."
                             }
@@ -404,16 +407,18 @@ private fun EmployeeEditorScreen(
                 item {
                     ProcessedAssetCard(
                         title = "Employee Signature",
-                        instruction = "Auto Clean removes light paper and saves a transparent signature. Keep Original is recommended when you already have a clean transparent PNG.",
+                        instruction = "Choose the result for the next signature image. Transparent Background prevents a printed rectangle.",
                         uriString = signatureUri,
                         processing = signatureProcessing,
                         statusText = signatureMessage,
                         mode = signatureMode,
+                        autoModeLabel = "Transparent BG",
+                        autoModeSummary = "Removes a plain light or dark background, crops the signature, and saves a transparent PNG. Fully offline.",
                         originalHint = "Recommended: upload a transparent PNG and choose Keep Original so the app does not alter it.",
                         onModeChange = {
                             signatureMode = it
                             signatureMessage = if (it == AssetInputMode.AUTO_CLEAN) {
-                                "Auto Clean selected. The next Camera/Gallery signature will be processed."
+                                "Transparent Background selected. The next Camera/Gallery signature will be cleaned without adding a box."
                             } else {
                                 "Keep Original selected. Upload a transparent PNG for the cleanest result."
                             }
@@ -555,6 +560,8 @@ private fun ProcessedAssetCard(
     processing: Boolean,
     statusText: String,
     mode: AssetInputMode,
+    autoModeLabel: String,
+    autoModeSummary: String,
     originalHint: String,
     onModeChange: (AssetInputMode) -> Unit,
     onCamera: () -> Unit,
@@ -574,12 +581,12 @@ private fun ProcessedAssetCard(
             Text(title, style = MaterialTheme.typography.titleSmall)
             Text(instruction, style = MaterialTheme.typography.bodySmall)
 
-            Text("Image handling", style = MaterialTheme.typography.labelLarge)
+            Text("Background result for next image", style = MaterialTheme.typography.labelLarge)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ChoiceButton("Auto Clean", mode == AssetInputMode.AUTO_CLEAN) {
+                ChoiceButton(autoModeLabel, mode == AssetInputMode.AUTO_CLEAN) {
                     onModeChange(AssetInputMode.AUTO_CLEAN)
                 }
                 ChoiceButton("Keep Original", mode == AssetInputMode.KEEP_ORIGINAL) {
@@ -588,7 +595,7 @@ private fun ProcessedAssetCard(
             }
             Text(
                 if (mode == AssetInputMode.AUTO_CLEAN) {
-                    "Background cleanup will run fully offline."
+                    autoModeSummary
                 } else {
                     originalHint
                 },
@@ -599,10 +606,14 @@ private fun ProcessedAssetCard(
                 Image(
                     bitmap = preview.asImageBitmap(),
                     contentDescription = "$title preview",
-                    modifier = Modifier.fillMaxWidth().height(170.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(170.dp)
+                        .background(androidx.compose.ui.graphics.Color.White)
+                        .padding(8.dp),
                     contentScale = ContentScale.Fit
                 )
-                Text("Image preview", style = MaterialTheme.typography.labelMedium)
+                Text("Preview on white", style = MaterialTheme.typography.labelMedium)
             } else {
                 Text("No image selected yet", style = MaterialTheme.typography.bodySmall)
             }
