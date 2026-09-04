@@ -13,6 +13,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify source manifest is offline-only
+        shell: bash
+        run: |
+          if grep -R --include='AndroidManifest.xml' -n 'android.permission.INTERNET' app/src | grep -v 'tools:node="remove"'; then
+            echo "ERROR: INTERNET permission found in source manifest."
+            exit 1
+          fi
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
@@ -26,6 +34,15 @@ jobs:
 
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
+
+      - name: Verify merged manifest has no INTERNET permission
+        shell: bash
+        run: |
+          if grep -R --include='AndroidManifest.xml' -n 'android.permission.INTERNET' app/build/intermediates 2>/dev/null; then
+            echo "ERROR: INTERNET permission appeared in the merged manifest."
+            exit 1
+          fi
+          echo "Offline-only check passed: no INTERNET permission in merged manifests."
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
