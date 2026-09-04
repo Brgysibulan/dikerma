@@ -144,10 +144,11 @@ private fun HomeScreen(onRecords: () -> Unit, onGenerate: () -> Unit, onSettings
         Text("Quick Setup", style = MaterialTheme.typography.titleMedium)
         Text(
             "1. Upload the front and back ID design in Settings.\n" +
-                "2. Upload Logo 1, Logo 2 and the Punong Barangay signature.\n" +
-                "3. Add employee records and use Camera or Gallery for the ID photo.\n" +
-                "4. Upload the employee WEBV3LITE QR image when available.\n" +
-                "5. Select Person 1 and optional Person 2, then generate the A4 PDF."
+                "2. Open Layout Studio, arrange both sides once, then save and lock the placement.\n" +
+                "3. Upload Logo 1, Logo 2 and the Punong Barangay signature.\n" +
+                "4. Add employee records and use Camera or Gallery for the ID photo.\n" +
+                "5. Upload the employee WEBV3LITE QR image when available.\n" +
+                "6. Select Person 1 and optional Person 2, then generate the A4 PDF."
         )
         Text(
             "Print using Actual Size / 100%. Do not use Fit to Page.",
@@ -162,6 +163,12 @@ private fun HomeScreen(onRecords: () -> Unit, onGenerate: () -> Unit, onSettings
 private fun SettingsScreen() {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("id_maker_settings", android.content.Context.MODE_PRIVATE) }
+    var showLayoutStudio by remember { mutableStateOf(false) }
+
+    if (showLayoutStudio) {
+        IdLayoutEditorScreen(onClose = { showLayoutStudio = false })
+        return
+    }
 
     var republic by remember { mutableStateOf(prefs.getString("republic", "REPUBLIC OF THE PHILIPPINES") ?: "") }
     var province by remember { mutableStateOf(prefs.getString("province", "Province of Davao del Sur") ?: "") }
@@ -240,7 +247,7 @@ private fun SettingsScreen() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("ID Setup & Settings", style = MaterialTheme.typography.headlineSmall)
-        Text("The uploaded design stays as the background. Overlay lines and typography can be controlled here.", style = MaterialTheme.typography.bodyMedium)
+        Text("The uploaded design stays as the background. Arrange overlays once, save the placement, and reuse it uniformly for every ID.", style = MaterialTheme.typography.bodyMedium)
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -257,6 +264,28 @@ private fun SettingsScreen() {
         Text("Upload the blank front and back artwork for the 85 × 115 mm portrait ID. The app will not add decorative panels over an uploaded design.", style = MaterialTheme.typography.bodySmall)
         AssetPickerRow("Front ID Design", frontTemplateUri.isNotBlank()) { frontTemplatePicker.launch(arrayOf("image/*")) }
         AssetPickerRow("Back ID Design", backTemplateUri.isNotBlank()) { backTemplatePicker.launch(arrayOf("image/*")) }
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Layout Studio", fontWeight = FontWeight.Bold)
+                val layoutSaved = prefs.getBoolean(IdLayoutStore.KEY_LAYOUT_SAVED, false)
+                val layoutLocked = prefs.getBoolean(IdLayoutStore.KEY_LAYOUT_LOCKED, false)
+                Text(
+                    if (layoutSaved) "Placement saved${if (layoutLocked) " and locked" else ""}" else "Using professional default placement",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "Arrange the front and back overlays once, save the placement, then use the same uniform layout for every employee ID.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Button(
+                    onClick = { showLayoutStudio = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Arrange Front & Back") }
+            }
+        }
 
         HorizontalDivider()
         Text("Outline Controls", style = MaterialTheme.typography.titleMedium)

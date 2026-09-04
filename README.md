@@ -1,29 +1,30 @@
 # Barangay ID Maker
 
-## App Description — v0.6.1
+## App Description — v0.7.0
 A **fully offline Android Barangay Employee ID Maker** for Barangay Sibulan. The app stores employee records on-device, accepts employee photos and signatures from Camera or Gallery/files, supports optional offline background cleanup, stores uploaded WEBV3LITE QR images, and generates print-ready A4 PDFs for front/back employee IDs.
 
 The current physical ID size is **85 mm × 115 mm portrait** for both the front and back. The uploaded front/back artwork is treated as the actual visual background. The app should only place dynamic data on top of that artwork unless no background design has been uploaded.
 
 ## Current Version
-- Version name: **0.6.1**
-- Version code: **8**
+- Version name: **0.7.0**
+- Version code: **9**
 - Android minSdk: 26
 - Android targetSdk: 35
 
 ## Continuation Status — September 4, 2026
-The first generated-PDF screenshot from v0.6.0 was reviewed and was **not approved as the final visual layout**. Version 0.6.1 is the current screenshot-driven correction.
+The generated-PDF screenshots were reviewed and were **not approved as the final visual layout**. Version 0.7.0 adds a saved mobile Layout Studio so the overlay placement can be adjusted to the uploaded artwork instead of relying on one hardcoded composition.
 
 Latest completed work:
-- Fixed Auto Clean for signatures photographed on a plain light or dark background.
-- Added PDF-time cleanup for older app-generated signatures showing a uniform black rectangle.
-- Preserved Keep Original behavior without modifying the uploaded source.
-- Moved the back Issued By / Approved By, Important Notice, and footer content upward.
-- Increased footer readability and bottom safe margin.
-- Confirmed that selecting only Person 1 leaves the entire bottom A4 row blank without cut boxes.
-- GitHub Actions run **#73** passed APK compilation, offline-only verification, and artifact upload.
+- Added Front/Back **Layout Studio** with a live 85 × 115 mm template preview.
+- Added touch drag placement plus sliders for exact horizontal/vertical position and element size.
+- Added per-text size, alignment, color, visibility, outline on/off, and outline-thickness controls.
+- Added overlap warnings for critical Front and Back sections.
+- Added layout locking, per-side professional reset, and one **Save placement • Apply to all IDs** action.
+- Saved coordinates use millimetres inside the physical card and are reused for every employee, including both people on the A4 sheet.
+- Removed the duplicate Punong Barangay signatory block from the bottom of the Front ID.
+- Preserved the v0.6.1 signature cleanup, full-month DOB formatting, background-first rendering, and independent outline controls.
 
-Next continuation step: install the v0.6.1 APK, generate a new PDF using the same employee/template data, and review new screenshots plus an Actual Size / 100% test print. Do not describe the layout as visually final until the user approves those results.
+Next continuation step: complete automated build/offline/artifact validation, install the v0.7.0 APK, arrange and lock one layout, then generate a new PDF using the same employee/template data. Do not describe the layout as visually final until the user approves the screenshots and Actual Size / 100% test print.
 
 ## Locked Physical ID Size
 Each generated front/back ID is:
@@ -101,6 +102,30 @@ A global **Font Scale** control is also available from **85% to 120%** so the ov
 
 Text is rendered directly over the uploaded artwork without glow, shadow, sticker, pill, or automatic gray/white backing effects. Long employee names and designations may wrap to two lines and scale only within a controlled readable range.
 
+## Saved Layout Studio
+Settings includes **Layout Studio** for matching overlays to any uploaded Front/Back artwork without changing employee records.
+
+User-friendly workflow:
+1. Upload the blank Front and Back background artwork.
+2. Open **Settings → Arrange Front & Back**.
+3. Choose the Front or Back tab.
+4. Tap and drag an overlay, or use the position and size sliders for fine adjustment.
+5. Adjust text size, alignment, black/white/green color, visibility, and optional text outline for the selected text item.
+6. Review automatic warnings for critical collisions such as QR versus Employee No. or Important Notice versus footer.
+7. Turn on **Lock placement after saving** when the composition is ready.
+8. Tap **Save placement • Apply to all IDs**.
+
+The saved layout is global and uniform. It is not stored separately in each employee record, so one approved placement can be reused for 200 or more employee IDs without manual re-layout.
+
+Technical behavior:
+- All overlay positions and sizes are stored in millimetres inside the fixed **85 × 115 mm** card.
+- The editor preview and PDF generator read the same saved layout model.
+- Phone resolution and preview zoom do not change the physical PDF coordinates.
+- A professional default is available separately for Front and Back.
+- QR rendering remains proportional and its editor size stays square.
+- Text outline is controlled per text item and is **off by default**.
+- Existing photo, information-divider, signature-line, QR, back-divider, and cut-guide controls remain independent.
+
 ## Employee Photo and Signature Input
 Both **ID Photo** and **Employee Signature** support two modes.
 
@@ -167,7 +192,8 @@ Dynamic content currently includes:
 - Employee signature
 - QR image
 - Verification label
-- Punong Barangay/signatory information where applicable
+
+The Front does not repeat a second Punong Barangay name/title at the bottom. Approval information remains on the Back.
 
 Internal outlines are optional and controlled from Settings.
 
@@ -213,7 +239,7 @@ The installed app is intentionally designed to operate without internet access.
 - **Home** — shortcuts and workflow guidance
 - **Records** — employee CRUD, photo, signature and QR management
 - **Generate ID** — select Person 1 and optional Person 2 and create the A4 PDF
-- **Settings** — front/back designs, logos, headings, signatory assets, outline controls and typography controls
+- **Settings** — front/back designs, Layout Studio, logos, headings, signatory assets, outline controls and typography controls
 
 ## Current Testing Priorities
 Before finalizing the visual layout, test:
@@ -232,6 +258,10 @@ Before finalizing the visual layout, test:
 12. When Person 2 is empty, no blank bottom-row cut boxes appear.
 13. Date of Birth appears like **January 12, 1987**, never as a raw numeric or ISO date.
 14. QR and `SCAN TO VERIFY` stay in their lower-right block and never overlap Employee No.
+15. Save a Front/Back placement, reopen Layout Studio, and confirm the layout persists.
+16. Generate IDs for two different employees and confirm both use the same saved placement.
+17. Confirm editor selection boxes/guides never appear in the PDF.
+18. Confirm optional per-text outlines are absent when disabled and use the saved thickness when enabled.
 
 ## Build and APK
 GitHub Actions automatically builds a debug APK on pushes to `main` and verifies that the APK remains offline-only.
@@ -243,4 +273,4 @@ To obtain the latest APK from GitHub:
 4. Download the **BarangayIDMaker-debug-apk** artifact.
 
 ## Current Direction
-The project is now focused on **background-first rendering**: the uploaded barangay artwork defines the visual design, while the app only overlays data, optional outlines, consistent typography and fully offline PDF output at the locked **85 × 115 mm** physical size. The visual positions remain subject to user approval of generated-PDF screenshots and an Actual Size / 100% test print.
+The project is now focused on **background-first rendering with one reusable saved layout**: the uploaded barangay artwork defines the visual design, while the app only overlays data, optional outlines, consistent typography and fully offline PDF output at the locked **85 × 115 mm** physical size. The saved composition can be reused uniformly for a 200-ID batch. Visual positions remain subject to user approval of generated-PDF screenshots and an Actual Size / 100% test print.

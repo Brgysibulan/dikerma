@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.7.0 — September 4, 2026
+
+Saved mobile layout workflow for repeatable batch production.
+
+### Layout Studio
+- Added a Front/Back Layout Studio under Settings with the uploaded template as the live background.
+- Added touch drag placement and fine position/size sliders for every overlay element.
+- Stored layout coordinates and dimensions in millimetres inside the physical 85 × 115 mm card.
+- Added one **Save placement • Apply to all IDs** action so the same approved composition is reused for a 200-ID batch.
+- Added layout locking to prevent accidental movement after approval.
+- Added separate professional-default reset actions for Front and Back.
+- Added editor-only safe guides and selected-item borders that are never rendered in the PDF.
+- Added critical overlap warnings for the Front photo/information/QR/signature blocks and Back content/footer blocks.
+
+### Per-element controls
+- Added per-text size, alignment, black/white/dark-green color, visibility, text-outline on/off, and text-outline thickness.
+- Text outlines remain off by default and do not force outlines on any other element.
+- Preserved the existing independent cut-guide, photo, information-divider, signature-line, QR, and back-divider controls.
+- Kept the global Sans Serif/Serif/Monospace family and Font Scale controls.
+
+### PDF renderer
+- The active PDF renderer now reads the exact same saved placement model used by Layout Studio.
+- Preserved full uploaded-template mapping to the complete 85 × 115 mm rectangle.
+- Preserved proportional logo, signature, and upload-only QR rendering.
+- Kept long-name/designation fitting and full-month English DOB formatting.
+- Removed the duplicate Punong Barangay name/title from the bottom of the Front; approval information remains on the Back.
+- Kept A4 Person 1/Person 2 pairing and blank-bottom-row behavior unchanged.
+
+### Version and validation
+- Android version bumped to **0.7.0 / versionCode 9**.
+- GitHub Actions compile, offline-only verification, and APK artifact validation are required before release handoff.
+
 ## 0.6.1 — September 4, 2026
 
 Screenshot-driven correction after the first v0.6.0 PDF test.
