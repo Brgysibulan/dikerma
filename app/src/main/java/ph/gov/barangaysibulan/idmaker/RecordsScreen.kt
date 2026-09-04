@@ -30,6 +30,7 @@ import ph.gov.barangaysibulan.idmaker.data.Employee
 fun RecordsScreen() {
     val context = LocalContext.current
     val dao = remember { AppDatabase.get(context).employeeDao() }
+    val scope = rememberCoroutineScope()
     val employees by dao.observeAll().collectAsState(initial = emptyList())
 
     var search by remember { mutableStateOf("") }
@@ -73,7 +74,10 @@ fun RecordsScreen() {
         ) {
             Column {
                 Text("Employee Records", style = MaterialTheme.typography.headlineSmall)
-                Text("${employees.size} saved record${if (employees.size == 1) "" else "s"}", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "${employees.size} saved record${if (employees.size == 1) "" else "s"}",
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
             Button(onClick = { addingNew = true }) {
                 Icon(Icons.Default.Add, contentDescription = null)
@@ -135,7 +139,6 @@ fun RecordsScreen() {
     }
 
     employeeToDelete?.let { employee ->
-        val scope = rememberCoroutineScope()
         AlertDialog(
             onDismissRequest = { employeeToDelete = null },
             title = { Text("Delete employee?") },
@@ -143,7 +146,11 @@ fun RecordsScreen() {
             confirmButton = {
                 TextButton(
                     onClick = {
-                        scope.launch { dao.delete(employee) }
+                        scope.launch {
+                            dao.delete(employee)
+                            OfflineImageProcessor.deleteProcessed(context, employee.photoUri)
+                            OfflineImageProcessor.deleteProcessed(context, employee.signatureUri)
+                        }
                         employeeToDelete = null
                     }
                 ) { Text("Delete") }
@@ -166,6 +173,9 @@ private fun EmployeeEditorScreen(
     val scope = rememberCoroutineScope()
 
     key(employee?.id ?: 0L) {
+        val originalPhotoUri = employee?.photoUri.orEmpty()
+        val originalSignatureUri = employee?.signatureUri.orEmpty()
+
         var fullName by remember { mutableStateOf(employee?.fullName ?: "") }
         var position by remember { mutableStateOf(employee?.position ?: "") }
         var controlNumber by remember { mutableStateOf(employee?.controlNumber ?: "") }
@@ -173,8 +183,8 @@ private fun EmployeeEditorScreen(
         var address by remember { mutableStateOf(employee?.address ?: "") }
         var sex by remember { mutableStateOf(employee?.sex ?: "") }
         var civilStatus by remember { mutableStateOf(employee?.civilStatus ?: "") }
-        var photoUri by remember { mutableStateOf(employee?.photoUri ?: "") }
-        var signatureUri by remember { mutableStateOf(employee?.signatureUri ?: "") }
+        var photoUri by remember { mutableStateOf(originalPhotoUri) }
+        var signatureUri by remember { mutableStateOf(originalSignatureUri) }
         var qrToken by remember { mutableStateOf(employee?.qrToken ?: "") }
         var qrImageUri by remember { mutableStateOf(employee?.qrImageUri ?: "") }
         var status by remember { mutableStateOf(employee?.status ?: "Active") }
@@ -198,6 +208,18 @@ private fun EmployeeEditorScreen(
             }
         }
 
+        fun deleteTransientPhoto() {
+            if (photoUri.isNotBlank() && photoUri != originalPhotoUri) {
+                OfflineImageProcessor.deleteProcessed(context, photoUri)
+            }
+        }
+
+        fun deleteTransientSignature() {
+            if (signatureUri.isNotBlank() && signatureUri != originalSignatureUri) {
+                OfflineImageProcessor.deleteProcessed(context, signatureUri)
+            }
+        }
+
         fun processPhoto(source: Uri, cameraTarget: CameraTarget? = null) {
             photoProcessing = true
             photoMessage = "Processing photo fully offline…"
@@ -205,10 +227,11 @@ private fun EmployeeEditorScreen(
                 val result = runCatching { OfflineImageProcessor.processIdPhoto(context, source) }.getOrNull()
                 cameraTarget?.file?.delete()
                 if (result != null) {
+                    deleteTransientPhoto()
                     photoUri = result.uri
                     photoMessage = result.note
                 } else {
-                    photoMessage = "Could not separate the background. Retake using a plain solid background with even lighting."
+                    photoMessage = "Could not separate the background. Try another photo with a plain solid background and even lighting."
                 }
                 photoProcessing = false
             }
@@ -221,10 +244,11 @@ private fun EmployeeEditorScreen(
                 val result = runCatching { OfflineImageProcessor.processSignature(context, source) }.getOrNull()
                 cameraTarget?.file?.delete()
                 if (result != null) {
+                    deleteTransientSignature()
                     signatureUri = result.uri
                     signatureMessage = result.note
                 } else {
-                    signatureMessage = "Could not detect the signature clearly. Use black/dark ink on clean white or light paper and retake."
+                    signatureMessage = "Could not detect the signature clearly. Use black/dark ink on clean white or light paper and try again."
                 }
                 signatureProcessing = false
             }
@@ -263,17 +287,21 @@ private fun EmployeeEditorScreen(
             }
         }
 
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(if (employee == null) "Add Employee" else "Edit Employee", style = MaterialTheme.typography.headlineSmall)
-                    Text("Employee information and image processing stay only on this device.", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        if (employee == null) "Add Employee" else "Edit Employee",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Text(
+                        "Employee information and image processing stay only on this device.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
 
@@ -305,7 +333,7 @@ private fun EmployeeEditorScreen(
                     Spacer(Modifier.height(6.dp))
                     Text("Photo & Signature — Offline Auto Cleanup", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "ID photo: use a plain solid-color background. Signature: use black/dark ink on clean white or light paper.",
+                        "ID photo: take a new picture or upload an existing photo. A plain solid-color background works best for automatic white-background cleanup. Signature: use black/dark ink on clean white or light paper.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -313,7 +341,7 @@ private fun EmployeeEditorScreen(
                 item {
                     ProcessedAssetCard(
                         title = "ID Photo",
-                        instruction = "The app removes the plain background, replaces it with pure white, then auto-crops the photo.",
+                        instruction = "Camera and uploaded photos use the same offline cleanup: plain background removal, pure white replacement, and auto-crop.",
                         uriString = photoUri,
                         processing = photoProcessing,
                         statusText = photoMessage,
@@ -329,6 +357,7 @@ private fun EmployeeEditorScreen(
                         },
                         onGallery = { photoPicker.launch(arrayOf("image/*")) },
                         onClear = {
+                            deleteTransientPhoto()
                             photoUri = ""
                             photoMessage = "Photo cleared."
                         }
@@ -354,6 +383,7 @@ private fun EmployeeEditorScreen(
                         },
                         onGallery = { signaturePicker.launch(arrayOf("image/*")) },
                         onClear = {
+                            deleteTransientSignature()
                             signatureUri = ""
                             signatureMessage = "Signature cleared."
                         }
@@ -365,7 +395,7 @@ private fun EmployeeEditorScreen(
                     Spacer(Modifier.height(6.dp))
                     Text("WEBV3LITE Verification", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "You can either paste the WEBV3LITE token/verification URL or upload the QR image downloaded from WEBV3LITE.",
+                        "Upload the QR image downloaded from WEBV3LITE. The optional token/verification URL can also be stored with the record.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -395,7 +425,11 @@ private fun EmployeeEditorScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OutlinedButton(
-                    onClick = onCancel,
+                    onClick = {
+                        deleteTransientPhoto()
+                        deleteTransientSignature()
+                        onCancel()
+                    },
                     modifier = Modifier.weight(1f),
                     enabled = !saving && !photoProcessing && !signatureProcessing
                 ) { Text("Cancel") }
@@ -428,6 +462,14 @@ private fun EmployeeEditorScreen(
                                 )
                                 if (employee == null) dao.insert(record) else dao.update(record)
                             }.onSuccess {
+                                if (employee != null) {
+                                    if (photoUri != originalPhotoUri) {
+                                        OfflineImageProcessor.deleteProcessed(context, originalPhotoUri)
+                                    }
+                                    if (signatureUri != originalSignatureUri) {
+                                        OfflineImageProcessor.deleteProcessed(context, originalSignatureUri)
+                                    }
+                                }
                                 onSaved()
                             }.onFailure {
                                 saving = false
@@ -497,7 +539,7 @@ private fun ProcessedAssetCard(
                     onClick = onGallery,
                     enabled = !processing,
                     modifier = Modifier.weight(1f)
-                ) { Text("Gallery") }
+                ) { Text("Gallery / Upload") }
             }
 
             if (uriString.isNotBlank()) {
@@ -534,9 +576,15 @@ private fun EmployeeTextField(
 @Composable
 private fun ChoiceButton(label: String, selected: Boolean, onClick: () -> Unit) {
     if (selected) {
-        Button(onClick = onClick, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) { Text(label) }
+        Button(
+            onClick = onClick,
+            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+        ) { Text(label) }
     } else {
-        OutlinedButton(onClick = onClick, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) { Text(label) }
+        OutlinedButton(
+            onClick = onClick,
+            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+        ) { Text(label) }
     }
 }
 
