@@ -74,7 +74,7 @@ fun TightPortraitGenerateScreen() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Generate ID", style = MaterialTheme.typography.headlineSmall)
-        Text("A4 portrait • exact CR80 cut guides • 25 × 30 mm employee photo • 1 or 2 people")
+        Text("A4 portrait • 85 × 115 mm ID front/back • 1 or 2 people")
 
         if (employees.isEmpty()) {
             Card(Modifier.fillMaxWidth()) {
@@ -180,8 +180,8 @@ fun TightPortraitGenerateScreen() {
                 Text("Slot 1 / top-left: Person 1 Front")
                 Text("Slot 2 / top-right: Person 1 Back")
                 Text(if (second == null) "Slots 3 & 4 / bottom row: blank" else "Slot 3: Person 2 Front • Slot 4: Person 2 Back")
-                Text("The 85.01 × 115.05 mm paper zones are placement anchors only.", style = MaterialTheme.typography.bodySmall)
-                Text("Visible cutting guides now follow the exact 53.98 × 85.60 mm CR80 card boundary.", style = MaterialTheme.typography.bodySmall)
+                Text("Each front/back ID is exactly 85 × 115 mm.", style = MaterialTheme.typography.bodySmall)
+                Text("The visible border is the actual cutting guide for the ID.", style = MaterialTheme.typography.bodySmall)
             }
         }
 
@@ -207,15 +207,18 @@ fun TightPortraitGenerateScreen() {
 }
 
 private const val TIGHT_PT_PER_MM = 72f / 25.4f
-private const val SLOT_W_MM = 85.01f
-private const val SLOT_H_MM = 115.05f
+private const val ID_W_MM = 85.0f
+private const val ID_H_MM = 115.0f
 private const val SLOT_LEFT_1_MM = 19.97f
 private const val SLOT_LEFT_2_MM = 105.02f
 private const val SLOT_TOP_1_MM = 14.77f
 private const val SLOT_TOP_2_MM = 168.62f
-private const val CARD_W_MM = 53.98f
-private const val CARD_H_MM = 85.60f
-private const val TIGHT_MAX_BITMAP_SIDE = 1800
+private const val TIGHT_MAX_BITMAP_SIDE = 2200
+
+private val BRAND_GREEN = Color.rgb(0, 82, 45)
+private val BRAND_GREEN_DARK = Color.rgb(0, 67, 37)
+private val BRAND_YELLOW = Color.rgb(247, 190, 0)
+private val BRAND_RED = Color.rgb(196, 28, 38)
 
 private fun mm(value: Float): Float = value * TIGHT_PT_PER_MM
 private fun cardX(r: RectF, valueMm: Float): Float = r.left + mm(valueMm)
@@ -227,20 +230,12 @@ private fun cardRect(r: RectF, leftMm: Float, topMm: Float, widthMm: Float, heig
     cardY(r, topMm + heightMm)
 )
 
-private fun paperSlot(leftMm: Float, topMm: Float): RectF = RectF(
+private fun idSlot(leftMm: Float, topMm: Float): RectF = RectF(
     mm(leftMm),
     mm(topMm),
-    mm(leftMm + SLOT_W_MM),
-    mm(topMm + SLOT_H_MM)
+    mm(leftMm + ID_W_MM),
+    mm(topMm + ID_H_MM)
 )
-
-private fun centeredCard(slot: RectF): RectF {
-    val cardW = mm(CARD_W_MM)
-    val cardH = mm(CARD_H_MM)
-    val left = slot.left + (slot.width() - cardW) / 2f
-    val top = slot.top + (slot.height() - cardH) / 2f
-    return RectF(left, top, left + cardW, top + cardH)
-}
 
 private fun writeTightPortraitPdf(
     context: Context,
@@ -255,10 +250,10 @@ private fun writeTightPortraitPdf(
         val canvas = page.canvas
         canvas.drawColor(Color.WHITE)
 
-        val card1 = centeredCard(paperSlot(SLOT_LEFT_1_MM, SLOT_TOP_1_MM))
-        val card2 = centeredCard(paperSlot(SLOT_LEFT_2_MM, SLOT_TOP_1_MM))
-        val card3 = centeredCard(paperSlot(SLOT_LEFT_1_MM, SLOT_TOP_2_MM))
-        val card4 = centeredCard(paperSlot(SLOT_LEFT_2_MM, SLOT_TOP_2_MM))
+        val card1 = idSlot(SLOT_LEFT_1_MM, SLOT_TOP_1_MM)
+        val card2 = idSlot(SLOT_LEFT_2_MM, SLOT_TOP_1_MM)
+        val card3 = idSlot(SLOT_LEFT_1_MM, SLOT_TOP_2_MM)
+        val card4 = idSlot(SLOT_LEFT_2_MM, SLOT_TOP_2_MM)
 
         listOf(card1, card2, card3, card4).forEach { tightDrawCardCutGuide(canvas, it) }
 
@@ -286,7 +281,7 @@ private fun tightDrawCardCutGuide(canvas: Canvas, card: RectF) {
     val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         style = Paint.Style.STROKE
-        strokeWidth = 0.55f
+        strokeWidth = 0.65f
     }
     canvas.drawRect(card, p)
 }
@@ -294,26 +289,71 @@ private fun tightDrawCardCutGuide(canvas: Canvas, card: RectF) {
 private fun tightDrawFront(context: Context, canvas: Canvas, r: RectF, e: Employee, prefs: SharedPreferences) {
     tightDrawTemplate(context, canvas, r, prefs.getString("front_template_uri", null), true)
 
-    val logoSize = 6.8f
-    tightDrawLogoOrB(context, canvas, cardRect(r, 2.5f, 2.3f, logoSize, logoSize), prefs.getString("logo1_uri", null))
-    tightDrawLogoOrB(context, canvas, cardRect(r, 44.68f, 2.3f, logoSize, logoSize), prefs.getString("logo2_uri", null))
-
-    val header = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.BLACK
-        textAlign = Paint.Align.CENTER
-        typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+    val headerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(242, 0, 82, 45)
+        style = Paint.Style.FILL
     }
-    val headerWidth = mm(32.8f)
-    header.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-    tightTextFit(canvas, prefs.getString("republic", "REPUBLIC OF THE PHILIPPINES") ?: "REPUBLIC OF THE PHILIPPINES", r.centerX(), cardY(r, 3.7f), headerWidth, header, 5.3f, 3.7f)
-    header.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
-    tightTextFit(canvas, prefs.getString("province", "Province of Davao del Sur") ?: "Province of Davao del Sur", r.centerX(), cardY(r, 5.9f), headerWidth, header, 4.8f, 3.5f)
-    tightTextFit(canvas, prefs.getString("municipality", "Municipality of Sta. Cruz") ?: "Municipality of Sta. Cruz", r.centerX(), cardY(r, 8.0f), headerWidth, header, 4.8f, 3.5f)
-    header.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-    tightTextFit(canvas, prefs.getString("barangay", "BARANGAY SIBULAN") ?: "BARANGAY SIBULAN", r.centerX(), cardY(r, 10.5f), headerWidth, header, 6.0f, 4.2f)
-    tightTextFit(canvas, prefs.getString("id_heading", "BARANGAY EMPLOYEE ID") ?: "BARANGAY EMPLOYEE ID", r.centerX(), cardY(r, 16.0f), mm(46f), header, 8.0f, 5.6f)
+    canvas.drawRect(cardRect(r, 0f, 0f, ID_W_MM, 25f), headerPaint)
 
-    val photoRect = cardRect(r, 3.2f, 20.0f, 25.0f, 30.0f)
+    val accent = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    accent.color = BRAND_YELLOW
+    canvas.drawRect(cardRect(r, 0f, 24.3f, ID_W_MM, 0.9f), accent)
+    accent.color = BRAND_RED
+    canvas.drawRect(cardRect(r, 0f, 25.2f, ID_W_MM, 0.6f), accent)
+
+    val bodyPanel = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(188, 255, 255, 255)
+        style = Paint.Style.FILL
+    }
+    canvas.drawRect(cardRect(r, 3.0f, 28.0f, 79.0f, 72.5f), bodyPanel)
+
+    val logo1Rect = cardRect(r, 4.5f, 3.7f, 17.0f, 17.0f)
+    tightDrawLogoOrB(context, canvas, logo1Rect, prefs.getString("logo1_uri", null))
+
+    val logo2Uri = prefs.getString("logo2_uri", null)
+    if (!logo2Uri.isNullOrBlank()) {
+        tightDrawLogoOrB(context, canvas, cardRect(r, 70.0f, 5.0f, 10.0f, 10.0f), logo2Uri)
+    }
+
+    val headerText = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.LEFT
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    }
+    tightTextFit(
+        canvas,
+        prefs.getString("barangay", "BARANGAY SIBULAN") ?: "BARANGAY SIBULAN",
+        cardX(r, 25.0f),
+        cardY(r, 10.5f),
+        mm(42.0f),
+        headerText,
+        13.5f,
+        8.0f
+    )
+    headerText.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+    tightTextFit(
+        canvas,
+        "STA. CRUZ, DAVAO DEL SUR",
+        cardX(r, 25.1f),
+        cardY(r, 16.0f),
+        mm(40.0f),
+        headerText,
+        7.5f,
+        5.5f
+    )
+    headerText.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    tightTextFit(
+        canvas,
+        prefs.getString("id_heading", "BARANGAY EMPLOYEE ID") ?: "BARANGAY EMPLOYEE ID",
+        cardX(r, 25.1f),
+        cardY(r, 21.3f),
+        mm(42.0f),
+        headerText,
+        8.4f,
+        6.0f
+    )
+
+    val photoRect = cardRect(r, 6.0f, 32.0f, 31.0f, 40.0f)
     tightLoadBitmap(context, e.photoUri)?.let { bitmap ->
         tightCenterCrop(canvas, bitmap, photoRect)
         bitmap.recycleSafely()
@@ -321,65 +361,121 @@ private fun tightDrawFront(context: Context, canvas: Canvas, r: RectF, e: Employ
     canvas.drawRect(
         photoRect,
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.DKGRAY
+            color = BRAND_GREEN
             style = Paint.Style.STROKE
-            strokeWidth = 0.45f
+            strokeWidth = 1.1f
         }
     )
 
-    val fieldX = cardX(r, 30.2f)
-    val fieldWidth = mm(20.5f)
+    val fieldX = cardX(r, 42.0f)
+    val fieldWidth = mm(36.0f)
     val label = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.DKGRAY
+        color = BRAND_GREEN_DARK
         textAlign = Paint.Align.LEFT
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        textSize = 4.7f
+        textSize = 7.0f
     }
     val value = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         textAlign = Paint.Align.LEFT
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
+    val divider = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = BRAND_GREEN
+        strokeWidth = 1.0f
+    }
 
-    canvas.drawText("NAME", fieldX, cardY(r, 23.0f), label)
-    tightTextFit(canvas, e.fullName.uppercase(), fieldX, cardY(r, 26.2f), fieldWidth, value, 6.5f, 4.2f)
-    canvas.drawText("DESIGNATION", fieldX, cardY(r, 32.0f), label)
-    tightTextFit(canvas, e.position, fieldX, cardY(r, 35.2f), fieldWidth, value, 6.0f, 4.0f)
-    canvas.drawText("ID NO.", fieldX, cardY(r, 41.0f), label)
-    tightTextFit(canvas, e.controlNumber, fieldX, cardY(r, 44.2f), fieldWidth, value, 6.2f, 4.1f)
+    canvas.drawText("NAME:", fieldX, cardY(r, 37.0f), label)
+    tightTextFit(canvas, e.fullName.uppercase(), fieldX, cardY(r, 44.0f), fieldWidth, value, 11.5f, 7.2f)
+    canvas.drawLine(fieldX, cardY(r, 47.0f), cardX(r, 78.0f), cardY(r, 47.0f), divider)
 
-    val signatureRect = cardRect(r, 4.0f, 55.0f, 21.5f, 6.5f)
+    canvas.drawText("DESIGNATION:", fieldX, cardY(r, 55.0f), label)
+    tightTextFit(canvas, e.position.uppercase(), fieldX, cardY(r, 62.0f), fieldWidth, value, 10.0f, 6.5f)
+    canvas.drawLine(fieldX, cardY(r, 65.0f), cardX(r, 78.0f), cardY(r, 65.0f), divider)
+
+    canvas.drawText("EMPLOYEE NO.:", fieldX, cardY(r, 73.0f), label)
+    tightTextFit(canvas, e.controlNumber, fieldX, cardY(r, 80.0f), fieldWidth, value, 11.0f, 7.0f)
+    canvas.drawLine(fieldX, cardY(r, 83.0f), cardX(r, 78.0f), cardY(r, 83.0f), divider)
+
+    val signatureRect = cardRect(r, 7.0f, 79.5f, 31.0f, 9.0f)
     tightLoadBitmap(context, e.signatureUri)?.let { bitmap ->
         tightDrawBitmapFit(canvas, bitmap, signatureRect)
         bitmap.recycleSafely()
     }
-    val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.BLACK
-        strokeWidth = 0.55f
-    }
-    canvas.drawLine(cardX(r, 3.8f), cardY(r, 62.2f), cardX(r, 25.8f), cardY(r, 62.2f), linePaint)
-
-    val smallCenter = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.BLACK
+    canvas.drawLine(cardX(r, 6.0f), cardY(r, 90.0f), cardX(r, 38.5f), cardY(r, 90.0f), divider)
+    val sigLabel = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = BRAND_GREEN_DARK
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
-    tightTextFit(canvas, "CARDHOLDER'S SIGNATURE", cardX(r, 14.8f), cardY(r, 64.4f), mm(22f), smallCenter, 4.5f, 3.2f)
+    tightTextFit(canvas, "SIGNATURE OF HOLDER", cardX(r, 22.25f), cardY(r, 94.0f), mm(32f), sigLabel, 6.8f, 5.0f)
 
-    val qrRect = cardRect(r, 36.3f, 54.5f, 14.0f, 14.0f)
+    val qrRect = cardRect(r, 55.0f, 79.0f, 22.0f, 22.0f)
+    val qrPanel = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(230, 255, 255, 255)
+        style = Paint.Style.FILL
+    }
+    canvas.drawRect(cardRect(r, 53.5f, 75.5f, 25.0f, 27.0f), qrPanel)
     tightLoadBitmap(context, e.qrImageUri)?.let { bitmap ->
         tightDrawBitmapFit(canvas, bitmap, qrRect)
         bitmap.recycleSafely()
     } ?: tightLabeledBox(canvas, qrRect, "QR")
-    tightTextFit(canvas, "SCAN TO VERIFY", cardX(r, 43.3f), cardY(r, 52.6f), mm(18f), smallCenter, 4.5f, 3.1f)
-    tightTextFit(canvas, "VERIFY ID VALIDITY", cardX(r, 43.3f), cardY(r, 71.2f), mm(18f), smallCenter, 4.2f, 3.0f)
+    val qrLabel = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = BRAND_GREEN_DARK
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    }
+    tightTextFit(canvas, "SCAN TO VERIFY", cardX(r, 66.0f), cardY(r, 78.0f), mm(24f), qrLabel, 6.5f, 4.8f)
+
+    val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(244, 0, 82, 45)
+        style = Paint.Style.FILL
+    }
+    canvas.drawRect(cardRect(r, 0f, 102.0f, ID_W_MM, 13.0f), footerPaint)
+    accent.color = BRAND_YELLOW
+    canvas.drawRect(cardRect(r, 0f, 101.1f, ID_W_MM, 0.7f), accent)
+    accent.color = BRAND_RED
+    canvas.drawRect(cardRect(r, 0f, 100.5f, ID_W_MM, 0.6f), accent)
+
+    val approver = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    }
+    val captainName = prefs.getString("captain_name", "ROWENA A. TABO")?.ifBlank { "ROWENA A. TABO" } ?: "ROWENA A. TABO"
+    tightTextFit(canvas, "HON. ${captainName.uppercase()}", r.centerX(), cardY(r, 108.8f), mm(72f), approver, 10.0f, 6.5f)
+    approver.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+    tightTextFit(
+        canvas,
+        prefs.getString("captain_title", "Punong Barangay") ?: "Punong Barangay",
+        r.centerX(),
+        cardY(r, 113.0f),
+        mm(54f),
+        approver,
+        7.0f,
+        5.0f
+    )
 }
 
 private fun tightDrawBack(context: Context, canvas: Canvas, r: RectF, e: Employee, prefs: SharedPreferences) {
     tightDrawTemplate(context, canvas, r, prefs.getString("back_template_uri", null), false)
 
-    val left = cardX(r, 4.0f)
-    val contentWidth = mm(45.98f)
+    val panel = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(198, 255, 255, 255)
+        style = Paint.Style.FILL
+    }
+    canvas.drawRect(cardRect(r, 4.0f, 4.0f, 77.0f, 101.0f), panel)
+
+    val sectionLine = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = BRAND_GREEN
+        strokeWidth = 1.0f
+    }
+    val label = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = BRAND_GREEN_DARK
+        textAlign = Paint.Align.LEFT
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textSize = 7.2f
+    }
     val normal = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         textAlign = Paint.Align.LEFT
@@ -391,91 +487,108 @@ private fun tightDrawBack(context: Context, canvas: Canvas, r: RectF, e: Employe
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
-    tightTextFit(canvas, "DATE OF BIRTH: ${e.birthdate.ifBlank { "—" }}", left, cardY(r, 5.0f), contentWidth, normal, 5.4f, 4.1f)
-    tightTextFit(canvas, "SEX: ${e.sex.ifBlank { "—" }}", left, cardY(r, 9.5f), mm(20f), normal, 5.2f, 4.0f)
-    tightTextFit(canvas, "CIVIL STATUS: ${e.civilStatus.ifBlank { "—" }}", cardX(r, 28.0f), cardY(r, 9.5f), mm(22f), normal, 5.2f, 3.8f)
+    canvas.drawText("DATE OF BIRTH:", cardX(r, 7.0f), cardY(r, 11.0f), label)
+    tightTextFit(canvas, e.birthdate.ifBlank { "—" }, cardX(r, 29.0f), cardY(r, 11.0f), mm(20f), normal, 7.8f, 5.5f)
 
-    bold.textSize = 4.8f
-    canvas.drawText("ADDRESS:", left, cardY(r, 13.7f), bold)
-    normal.textSize = 4.7f
+    canvas.drawText("SEX:", cardX(r, 7.0f), cardY(r, 18.0f), label)
+    tightTextFit(canvas, e.sex.ifBlank { "—" }, cardX(r, 17.0f), cardY(r, 18.0f), mm(18f), normal, 7.8f, 5.5f)
+    canvas.drawText("CIVIL STATUS:", cardX(r, 43.0f), cardY(r, 18.0f), label)
+    tightTextFit(canvas, e.civilStatus.ifBlank { "—" }, cardX(r, 65.0f), cardY(r, 18.0f), mm(14f), normal, 7.2f, 5.0f)
+
+    canvas.drawText("ADDRESS:", cardX(r, 7.0f), cardY(r, 25.0f), label)
     tightDrawWrappedText(
-        canvas = canvas,
-        value = e.address.ifBlank { "—" },
-        x = left,
-        startY = cardY(r, 16.1f),
-        maxWidth = contentWidth,
-        paint = normal,
-        textSize = 4.7f,
-        lineHeight = mm(2.2f),
-        maxLines = 2
+        canvas,
+        e.address.ifBlank { "—" },
+        cardX(r, 7.0f),
+        cardY(r, 30.0f),
+        mm(70.0f),
+        normal,
+        7.2f,
+        mm(3.3f),
+        2
     )
 
+    canvas.drawLine(cardX(r, 7.0f), cardY(r, 38.0f), cardX(r, 78.0f), cardY(r, 38.0f), sectionLine)
+
     bold.textAlign = Paint.Align.CENTER
-    tightTextFit(canvas, "IDENTIFICATION", r.centerX(), cardY(r, 23.0f), mm(44f), bold, 6.2f, 4.7f)
+    tightTextFit(canvas, "IDENTIFICATION", r.centerX(), cardY(r, 44.0f), mm(66f), bold, 10.0f, 7.0f)
     normal.textAlign = Paint.Align.LEFT
     val identification = "This identification card is issued to the bearer whose photograph appears herein and who is a bona fide employee of the Barangay Local Government Unit of Sibulan."
     tightDrawWrappedText(
-        canvas = canvas,
-        value = identification,
-        x = cardX(r, 5.0f),
-        startY = cardY(r, 26.0f),
-        maxWidth = mm(43.98f),
-        paint = normal,
-        textSize = 4.8f,
-        lineHeight = mm(2.35f),
-        maxLines = 4
+        canvas,
+        identification,
+        cardX(r, 9.0f),
+        cardY(r, 50.0f),
+        mm(67.0f),
+        normal,
+        7.2f,
+        mm(3.45f),
+        4
     )
 
-    bold.textAlign = Paint.Align.LEFT
-    tightTextFit(canvas, "ISSUED BY:", cardX(r, 5.0f), cardY(r, 39.5f), mm(44f), bold, 5.2f, 4.0f)
-    tightTextFit(canvas, prefs.getString("issuer_name", "BLGU - SIBULAN") ?: "BLGU - SIBULAN", cardX(r, 5.0f), cardY(r, 42.5f), mm(44f), bold, 5.8f, 4.3f)
+    canvas.drawLine(cardX(r, 7.0f), cardY(r, 64.5f), cardX(r, 78.0f), cardY(r, 64.5f), sectionLine)
 
-    tightTextFit(canvas, "APPROVED BY:", cardX(r, 5.0f), cardY(r, 47.0f), mm(44f), bold, 5.2f, 4.0f)
-    val captainSigRect = cardRect(r, 7.0f, 49.0f, 18.0f, 5.5f)
+    bold.textAlign = Paint.Align.LEFT
+    tightTextFit(canvas, "ISSUED BY:", cardX(r, 8.0f), cardY(r, 70.5f), mm(30f), bold, 8.0f, 6.0f)
+    tightTextFit(
+        canvas,
+        prefs.getString("issuer_name", "BLGU - SIBULAN") ?: "BLGU - SIBULAN",
+        cardX(r, 8.0f),
+        cardY(r, 76.0f),
+        mm(30f),
+        bold,
+        9.0f,
+        6.0f
+    )
+
+    tightTextFit(canvas, "APPROVED BY:", cardX(r, 45.0f), cardY(r, 70.5f), mm(31f), bold, 8.0f, 6.0f)
+    val captainSigRect = cardRect(r, 47.0f, 71.5f, 26.0f, 7.0f)
     tightLoadBitmap(context, prefs.getString("captain_signature_uri", null))?.let { bitmap ->
         tightDrawBitmapFit(canvas, bitmap, captainSigRect)
         bitmap.recycleSafely()
     }
-
     val captainName = prefs.getString("captain_name", "ROWENA A. TABO")?.ifBlank { "ROWENA A. TABO" } ?: "ROWENA A. TABO"
-    tightTextFit(canvas, captainName.uppercase(), cardX(r, 5.0f), cardY(r, 57.0f), mm(29f), bold, 5.8f, 4.2f)
-    canvas.drawLine(
-        cardX(r, 5.0f),
-        cardY(r, 58.0f),
-        cardX(r, 31.0f),
-        cardY(r, 58.0f),
-        Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; strokeWidth = 0.55f }
-    )
+    tightTextFit(canvas, captainName.uppercase(), cardX(r, 45.0f), cardY(r, 81.0f), mm(33f), bold, 7.8f, 5.5f)
     normal.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
-    tightTextFit(canvas, prefs.getString("captain_title", "Punong Barangay") ?: "Punong Barangay", cardX(r, 5.0f), cardY(r, 60.5f), mm(29f), normal, 5.0f, 3.8f)
+    tightTextFit(
+        canvas,
+        prefs.getString("captain_title", "Punong Barangay") ?: "Punong Barangay",
+        cardX(r, 45.0f),
+        cardY(r, 85.0f),
+        mm(31f),
+        normal,
+        6.5f,
+        4.8f
+    )
 
+    canvas.drawLine(cardX(r, 7.0f), cardY(r, 88.0f), cardX(r, 78.0f), cardY(r, 88.0f), sectionLine)
     bold.textAlign = Paint.Align.CENTER
-    tightTextFit(canvas, "IMPORTANT NOTICE", r.centerX(), cardY(r, 64.0f), mm(44f), bold, 5.5f, 4.1f)
+    tightTextFit(canvas, "IMPORTANT NOTICE", r.centerX(), cardY(r, 93.0f), mm(65f), bold, 8.5f, 6.0f)
     normal.textAlign = Paint.Align.LEFT
     val notices = listOf(
-        "- This ID is non-transferable.",
-        "- This ID remains the property of BLGU-Sibulan.",
-        "- If lost, report immediately to the Barangay Office.",
-        "- Unauthorized use or reproduction of this ID is prohibited."
+        "• This ID is non-transferable.",
+        "• This ID remains the property of BLGU-Sibulan.",
+        "• If lost, report immediately to the Barangay Office.",
+        "• Unauthorized use or reproduction of this ID is prohibited."
     )
-    val noticeY = listOf(67.0f, 69.8f, 72.6f, 75.4f)
+    val noticeY = listOf(97.5f, 101.0f, 104.5f, 108.0f)
     notices.forEachIndexed { index, line ->
-        tightTextFit(canvas, line, cardX(r, 5.0f), cardY(r, noticeY[index]), mm(44f), normal, 4.5f, 3.3f)
+        tightTextFit(canvas, line, cardX(r, 9.0f), cardY(r, noticeY[index]), mm(67f), normal, 6.2f, 4.8f)
     }
 
-    val footer = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.DKGRAY
+    val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(244, 0, 82, 45)
+        style = Paint.Style.FILL
+    }
+    canvas.drawRect(cardRect(r, 0f, 109.5f, ID_W_MM, 5.5f), footerPaint)
+    val footerText = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
     }
-    val officeAddress = prefs.getString(
-        "office_address",
-        "Barangay Hall, Sitio Centro, Barangay Sibulan, Sta. Cruz, Davao del Sur"
-    ) ?: "Barangay Hall, Sitio Centro, Barangay Sibulan, Sta. Cruz, Davao del Sur"
     val officeEmail = prefs.getString("office_email", "brgysibulan8001@gmail.com") ?: "brgysibulan8001@gmail.com"
     val officePhone = prefs.getString("office_phone", "0970 972 3363") ?: "0970 972 3363"
-    tightTextFit(canvas, officeAddress, r.centerX(), cardY(r, 80.3f), mm(47f), footer, 4.0f, 2.9f)
-    tightTextFit(canvas, "$officeEmail • $officePhone", r.centerX(), cardY(r, 83.2f), mm(45f), footer, 4.0f, 2.9f)
+    tightTextFit(canvas, "$officeEmail  •  $officePhone", r.centerX(), cardY(r, 113.3f), mm(75f), footerText, 5.4f, 4.2f)
 }
 
 private fun tightDrawTemplate(context: Context, canvas: Canvas, r: RectF, uri: String?, front: Boolean) {
@@ -491,12 +604,12 @@ private fun tightDrawTemplate(context: Context, canvas: Canvas, r: RectF, uri: S
     canvas.drawRect(r, p)
     p.style = Paint.Style.STROKE
     p.strokeWidth = 1f
-    p.color = Color.rgb(28, 92, 48)
+    p.color = BRAND_GREEN
     canvas.drawRect(r, p)
     p.style = Paint.Style.FILL
     if (front) {
-        p.color = Color.rgb(28, 92, 48)
-        canvas.drawRect(r.left, r.top, r.right, r.top + mm(17f), p)
+        p.color = BRAND_GREEN
+        canvas.drawRect(r.left, r.top, r.right, r.top + mm(25f), p)
     }
 }
 
@@ -537,11 +650,11 @@ private fun tightDrawLogoOrB(context: Context, canvas: Canvas, r: RectF, uri: St
     val p = Paint(Paint.ANTI_ALIAS_FLAG)
     p.color = Color.WHITE
     canvas.drawCircle(r.centerX(), r.centerY(), r.width() / 2f, p)
-    p.color = Color.rgb(28, 92, 48)
+    p.color = BRAND_GREEN
     p.textAlign = Paint.Align.CENTER
     p.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-    p.textSize = 13f
-    canvas.drawText("B", r.centerX(), r.centerY() + 4.5f, p)
+    p.textSize = 18f
+    canvas.drawText("B", r.centerX(), r.centerY() + 6f, p)
 }
 
 private fun tightLabeledBox(canvas: Canvas, r: RectF, label: String) {
@@ -552,9 +665,9 @@ private fun tightLabeledBox(canvas: Canvas, r: RectF, label: String) {
     canvas.drawRect(r, p)
     p.style = Paint.Style.FILL
     p.color = Color.DKGRAY
-    p.textSize = 7f
+    p.textSize = 9f
     p.textAlign = Paint.Align.CENTER
-    canvas.drawText(label, r.centerX(), r.centerY() + 2.5f, p)
+    canvas.drawText(label, r.centerX(), r.centerY() + 3f, p)
 }
 
 private fun tightTextFit(
