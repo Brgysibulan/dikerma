@@ -2,6 +2,37 @@
 
 Date: September 4, 2026
 
+## Latest Continuation Handoff
+- Repository: `Brgysibulan/dikerma`
+- Branch: `main`
+- Current implementation commit: `cdf9c55d2e7f9d4754153003a440b5d56d436320`
+- Current build: **0.6.1 / versionCode 8**
+- GitHub Actions: **Run #73 succeeded**
+- APK artifact: `BarangayIDMaker-debug-apk`
+
+The user tested the earlier v0.6.0 PDF and supplied a screenshot. That screenshot is a test reference only and was **not approved as final**.
+
+Observed from that screenshot:
+- Person 1 Front and Back correctly occupied the top-left/top-right slots.
+- The optional Person 2 bottom row correctly remained blank with no empty cut boxes.
+- The employee signature displayed as an unacceptable black rectangle.
+- The back Important Notice and footer were too dense and too close to the lower artwork.
+
+Corrections implemented in v0.6.1:
+- Auto Clean signature processing now removes a uniform light or dark background instead of assuming white paper.
+- Older app-generated signature images with a uniform opaque rectangle are repaired during PDF rendering.
+- Keep Original uploads remain unmodified as required.
+- Back Issued By / Approved By, Important Notice, address, email, and phone were moved upward for safer spacing.
+- Footer text size and safe bottom margin were increased.
+
+Required next test:
+1. Install the APK from GitHub Actions Run #73.
+2. Generate the same one-person PDF again.
+3. Confirm the black signature rectangle is gone.
+4. Confirm the Important Notice and footer are readable and do not collide with the dark/busy background.
+5. Send the new front/back screenshot for another layout review.
+6. Print at Actual Size / 100% and measure 85 × 115 mm before approval.
+
 ## Current Build Purpose
 The current build is for real PDF/print testing of the corrected **85 × 115 mm portrait ID** layout with user-controlled outlines and consistent typography.
 

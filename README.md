@@ -11,6 +11,20 @@ The current physical ID size is **85 mm × 115 mm portrait** for both the front 
 - Android minSdk: 26
 - Android targetSdk: 35
 
+## Continuation Status — September 4, 2026
+The first generated-PDF screenshot from v0.6.0 was reviewed and was **not approved as the final visual layout**. Version 0.6.1 is the current screenshot-driven correction.
+
+Latest completed work:
+- Fixed Auto Clean for signatures photographed on a plain light or dark background.
+- Added PDF-time cleanup for older app-generated signatures showing a uniform black rectangle.
+- Preserved Keep Original behavior without modifying the uploaded source.
+- Moved the back Issued By / Approved By, Important Notice, and footer content upward.
+- Increased footer readability and bottom safe margin.
+- Confirmed that selecting only Person 1 leaves the entire bottom A4 row blank without cut boxes.
+- GitHub Actions run **#73** passed APK compilation, offline-only verification, and artifact upload.
+
+Next continuation step: install the v0.6.1 APK, generate a new PDF using the same employee/template data, and review new screenshots plus an Actual Size / 100% test print. Do not describe the layout as visually final until the user approves those results.
+
 ## Locked Physical ID Size
 Each generated front/back ID is:
 
