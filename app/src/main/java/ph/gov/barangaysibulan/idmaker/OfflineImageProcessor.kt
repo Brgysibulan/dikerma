@@ -5,7 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
+import android.media.ExifInterface
 import android.net.Uri
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,7 @@ internal object OfflineImageProcessor {
     private const val MAX_SIGNATURE_INPUT = 1800
     private const val MAX_PHOTO_OUTPUT = 1000
     private const val MAX_SIGNATURE_OUTPUT = 1400
+    private val OWNED_IMAGE_NAME = Regex("^(id_photo|signature)_\\d+\\.(jpg|png)$")
 
     fun createCameraTarget(context: Context, prefix: String): CameraTarget {
         val dir = File(context.cacheDir, "camera_capture").apply { mkdirs() }
@@ -41,6 +44,26 @@ internal object OfflineImageProcessor {
             file
         )
         return CameraTarget(uri, file)
+    }
+
+    /**
+     * Deletes only images created by this processor inside filesDir/processed_images.
+     * External Gallery/Documents URIs are never deleted.
+     */
+    fun deleteProcessed(context: Context, uriString: String?): Boolean {
+        if (uriString.isNullOrBlank()) return false
+        return runCatching {
+            val uri = Uri.parse(uriString)
+            if (uri.scheme != "content" || uri.authority != "${context.packageName}.fileprovider") {
+                return@runCatching false
+            }
+            if (uri.pathSegments.firstOrNull() != "processed_images") return@runCatching false
+            val fileName = uri.pathSegments.lastOrNull()?.takeIf { OWNED_IMAGE_NAME.matches(it) }
+                ?: return@runCatching false
+            val dir = File(context.filesDir, "processed_images")
+            val file = File(dir, fileName)
+            file.exists() && file.delete()
+        }.getOrDefault(false)
     }
 
     suspend fun processIdPhoto(context: Context, source: Uri): ProcessedImage? = withContext(Dispatchers.IO) {
@@ -223,17 +246,56 @@ internal object OfflineImageProcessor {
             BitmapFactory.decodeStream(it, null, options)
         } ?: return null
 
-        val maxSide = max(decoded.width, decoded.height)
-        if (maxSide <= maxDimension) return decoded
+        val oriented = applyExifOrientation(context, uri, decoded)
+        val maxSide = max(oriented.width, oriented.height)
+        if (maxSide <= maxDimension) return oriented
         val scale = maxDimension.toFloat() / maxSide.toFloat()
         val scaled = Bitmap.createScaledBitmap(
-            decoded,
-            max(1, (decoded.width * scale).toInt()),
-            max(1, (decoded.height * scale).toInt()),
+            oriented,
+            max(1, (oriented.width * scale).toInt()),
+            max(1, (oriented.height * scale).toInt()),
             true
         )
-        if (scaled !== decoded) decoded.recycle()
+        if (scaled !== oriented) oriented.recycle()
         return scaled
+    }
+
+    private fun applyExifOrientation(context: Context, uri: Uri, bitmap: Bitmap): Bitmap {
+        val orientation = runCatching {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                ExifInterface(stream).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
+            } ?: ExifInterface.ORIENTATION_NORMAL
+        }.getOrDefault(ExifInterface.ORIENTATION_NORMAL)
+
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.setScale(-1f, 1f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.setRotate(180f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> {
+                matrix.setRotate(180f)
+                matrix.postScale(-1f, 1f)
+            }
+            ExifInterface.ORIENTATION_TRANSPOSE -> {
+                matrix.setRotate(90f)
+                matrix.postScale(-1f, 1f)
+            }
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.setRotate(90f)
+            ExifInterface.ORIENTATION_TRANSVERSE -> {
+                matrix.setRotate(-90f)
+                matrix.postScale(-1f, 1f)
+            }
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.setRotate(-90f)
+            else -> return bitmap
+        }
+
+        return runCatching {
+            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true).also { transformed ->
+                if (transformed !== bitmap && !bitmap.isRecycled) bitmap.recycle()
+            }
+        }.getOrElse { bitmap }
     }
 
     private fun collectBorderSamples(pixels: IntArray, width: Int, height: Int): IntArray {
