@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
@@ -18,15 +19,40 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ph.gov.barangaysibulan.idmaker.ui.AppScreen
+
+private val BarangayGreen = Color(0xFF1C5C30)
+private val BarangayGreenContainer = Color(0xFFDDEBDF)
+private val BarangayYellow = Color(0xFFF2C94C)
+private val BarangayRed = Color(0xFFB23A3A)
+
+@Composable
+private fun BarangayIdMakerTheme(content: @Composable () -> Unit) {
+    MaterialTheme(
+        colorScheme = lightColorScheme(
+            primary = BarangayGreen,
+            onPrimary = Color.White,
+            primaryContainer = BarangayGreenContainer,
+            onPrimaryContainer = Color(0xFF0B2614),
+            secondary = BarangayYellow,
+            onSecondary = Color(0xFF241A00),
+            tertiary = BarangayRed,
+            onTertiary = Color.White
+        ),
+        content = content
+    )
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            BarangayIdMakerTheme {
                 var screen by remember { mutableStateOf(AppScreen.HOME) }
                 Scaffold(
                     bottomBar = {
@@ -82,8 +108,38 @@ private fun HomeScreen(onRecords: () -> Unit, onGenerate: () -> Unit, onSettings
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text("Barangay ID Maker", style = MaterialTheme.typography.headlineMedium)
-        Text("Create and print employee IDs offline.", style = MaterialTheme.typography.bodyLarge)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(58.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        "B",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 26.sp
+                    )
+                }
+            }
+            Column(Modifier.weight(1f)) {
+                Text("Barangay ID Maker", style = MaterialTheme.typography.headlineMedium)
+                Text("Fully offline ID preparation and printing.", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+
+        Card(Modifier.fillMaxWidth()) {
+            Text(
+                "Camera or Gallery photo • Offline white-background cleanup • QR image upload • Up to 2 people per A4 sheet",
+                modifier = Modifier.padding(14.dp),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
 
         Button(onClick = onRecords, modifier = Modifier.fillMaxWidth().height(58.dp)) {
             Text("Employee Records")
@@ -97,7 +153,19 @@ private fun HomeScreen(onRecords: () -> Unit, onGenerate: () -> Unit, onSettings
 
         HorizontalDivider()
         Text("Quick Setup", style = MaterialTheme.typography.titleMedium)
-        Text("1. Upload the front and back ID design in Settings.\n2. Upload Logo 1, Logo 2 and the Punong Barangay signature.\n3. Add employee records.\n4. Select an employee and generate the A4 PDF.")
+        Text(
+            "1. Upload the front and back ID design in Settings.\n" +
+                "2. Upload Logo 1, Logo 2 and the Punong Barangay signature.\n" +
+                "3. Add employee records and use Camera or Gallery for the ID photo.\n" +
+                "4. Upload the employee WEBV3LITE QR image when available.\n" +
+                "5. Select Person 1 and optional Person 2, then generate the A4 PDF."
+        )
+        Text(
+            "Print using Actual Size / 100%. Do not use Fit to Page.",
+            color = MaterialTheme.colorScheme.tertiary,
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
 
@@ -134,30 +202,35 @@ private fun SettingsScreen() {
         uri?.let {
             frontTemplateUri = it.toString()
             persistPickedUri(frontTemplateUri, "front_template_uri")
+            savedMessage = "Front ID design saved"
         }
     }
     val backTemplatePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             backTemplateUri = it.toString()
             persistPickedUri(backTemplateUri, "back_template_uri")
+            savedMessage = "Back ID design saved"
         }
     }
     val logo1Picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             logo1Uri = it.toString()
             persistPickedUri(logo1Uri, "logo1_uri")
+            savedMessage = "Logo 1 saved"
         }
     }
     val logo2Picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             logo2Uri = it.toString()
             persistPickedUri(logo2Uri, "logo2_uri")
+            savedMessage = "Logo 2 saved"
         }
     }
     val signaturePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             captainSignatureUri = it.toString()
             persistPickedUri(captainSignatureUri, "captain_signature_uri")
+            savedMessage = "Punong Barangay signature saved"
         }
     }
 
@@ -166,10 +239,21 @@ private fun SettingsScreen() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("ID Setup & Settings", style = MaterialTheme.typography.headlineSmall)
-        Text("Set these once. The app will reuse them automatically when generating IDs.", style = MaterialTheme.typography.bodyMedium)
+        Text("Set these once. The app reuses the saved assets automatically when generating IDs.", style = MaterialTheme.typography.bodyMedium)
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Setup Status", fontWeight = FontWeight.Bold)
+                Text("Front design: ${if (frontTemplateUri.isNotBlank()) "Ready" else "Missing"}")
+                Text("Back design: ${if (backTemplateUri.isNotBlank()) "Ready" else "Missing"}")
+                Text("Logo 1: ${if (logo1Uri.isNotBlank()) "Ready" else "Optional / Missing"}")
+                Text("Logo 2: ${if (logo2Uri.isNotBlank()) "Ready" else "Optional / Missing"}")
+                Text("Signatory signature: ${if (captainSignatureUri.isNotBlank()) "Ready" else "Optional / Missing"}")
+            }
+        }
 
         Text("ID Design", style = MaterialTheme.typography.titleMedium)
-        Text("Upload the blank front and back design. Keep both images in the same fixed CR80 layout.", style = MaterialTheme.typography.bodySmall)
+        Text("Upload the blank front and back design using the same CR80 portrait layout (53.98 × 85.60 mm ratio).", style = MaterialTheme.typography.bodySmall)
         AssetPickerRow("Front ID Design", frontTemplateUri.isNotBlank()) { frontTemplatePicker.launch(arrayOf("image/*")) }
         AssetPickerRow("Back ID Design", backTemplateUri.isNotBlank()) { backTemplatePicker.launch(arrayOf("image/*")) }
 
@@ -209,7 +293,7 @@ private fun SettingsScreen() {
         ) { Text("Save Settings") }
 
         if (savedMessage.isNotBlank()) {
-            Text(savedMessage, style = MaterialTheme.typography.bodyMedium)
+            Text(savedMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
         }
         Spacer(Modifier.height(12.dp))
     }
@@ -238,15 +322,5 @@ private fun AssetPickerRow(label: String, isSelected: Boolean, onPick: () -> Uni
             Text(if (isSelected) "Saved on device" else "Not selected", style = MaterialTheme.typography.bodySmall)
         }
         OutlinedButton(onClick = onPick) { Text(if (isSelected) "Replace" else "Upload") }
-    }
-}
-
-@Composable
-private fun PlaceholderScreen(title: String, subtitle: String) {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.headlineSmall)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
