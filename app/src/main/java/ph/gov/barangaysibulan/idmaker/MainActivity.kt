@@ -1,8 +1,11 @@
 package ph.gov.barangaysibulan.idmaker
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import ph.gov.barangaysibulan.idmaker.ui.AppScreen
 
@@ -63,7 +67,7 @@ class MainActivity : ComponentActivity() {
                             )
                             AppScreen.RECORDS -> PlaceholderScreen("Employee Records", "CRUD + search screen is wired next.")
                             AppScreen.GENERATE -> PlaceholderScreen("Generate ID", "Fixed CR80 front/back renderer + A4 PDF comes next.")
-                            AppScreen.SETTINGS -> PlaceholderScreen("Settings", "Logo 1, Logo 2, Punong Barangay name/signature will be stored locally.")
+                            AppScreen.SETTINGS -> SettingsScreen()
                         }
                     }
                 }
@@ -85,7 +89,127 @@ private fun HomeScreen(onRecords: () -> Unit, onGenerate: () -> Unit, onSettings
         OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Settings") }
         HorizontalDivider()
         Text("Permission-safe setup", style = MaterialTheme.typography.titleMedium)
-        Text("No broad storage permission. Images will use Android's system picker and PDFs will use Save As/Create Document.")
+        Text("No broad storage permission. Images use Android's document picker and PDFs will use Save As/Create Document.")
+    }
+}
+
+@Composable
+private fun SettingsScreen() {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("id_maker_settings", android.content.Context.MODE_PRIVATE) }
+
+    var republic by remember { mutableStateOf(prefs.getString("republic", "REPUBLIC OF THE PHILIPPINES") ?: "") }
+    var province by remember { mutableStateOf(prefs.getString("province", "Province of Davao del Sur") ?: "") }
+    var municipality by remember { mutableStateOf(prefs.getString("municipality", "Municipality of Sta. Cruz") ?: "") }
+    var barangay by remember { mutableStateOf(prefs.getString("barangay", "BARANGAY SIBULAN") ?: "") }
+    var idHeading by remember { mutableStateOf(prefs.getString("id_heading", "BARANGAY EMPLOYEE ID") ?: "") }
+    var captainName by remember { mutableStateOf(prefs.getString("captain_name", "") ?: "") }
+    var captainTitle by remember { mutableStateOf(prefs.getString("captain_title", "PUNONG BARANGAY") ?: "") }
+
+    var logo1Uri by remember { mutableStateOf(prefs.getString("logo1_uri", "") ?: "") }
+    var logo2Uri by remember { mutableStateOf(prefs.getString("logo2_uri", "") ?: "") }
+    var captainSignatureUri by remember { mutableStateOf(prefs.getString("captain_signature_uri", "") ?: "") }
+    var savedMessage by remember { mutableStateOf("") }
+
+    fun persistPickedUri(uriString: String, key: String) {
+        if (uriString.isBlank()) return
+        runCatching {
+            val uri = android.net.Uri.parse(uriString)
+            context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        prefs.edit().putString(key, uriString).apply()
+    }
+
+    val logo1Picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            logo1Uri = it.toString()
+            persistPickedUri(logo1Uri, "logo1_uri")
+        }
+    }
+    val logo2Picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            logo2Uri = it.toString()
+            persistPickedUri(logo2Uri, "logo2_uri")
+        }
+    }
+    val signaturePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            captainSignatureUri = it.toString()
+            persistPickedUri(captainSignatureUri, "captain_signature_uri")
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("ID Settings", style = MaterialTheme.typography.headlineSmall)
+        Text("One-time setup. These values are saved only on this device.", style = MaterialTheme.typography.bodyMedium)
+
+        Text("Logos", style = MaterialTheme.typography.titleMedium)
+        AssetPickerRow("Logo 1", logo1Uri.isNotBlank()) { logo1Picker.launch(arrayOf("image/*")) }
+        AssetPickerRow("Logo 2", logo2Uri.isNotBlank()) { logo2Picker.launch(arrayOf("image/*")) }
+
+        HorizontalDivider()
+        Text("ID Heading", style = MaterialTheme.typography.titleMedium)
+        SettingsTextField("Republic", republic) { republic = it }
+        SettingsTextField("Province", province) { province = it }
+        SettingsTextField("Municipality", municipality) { municipality = it }
+        SettingsTextField("Barangay", barangay) { barangay = it }
+        SettingsTextField("ID Heading", idHeading) { idHeading = it }
+
+        HorizontalDivider()
+        Text("Punong Barangay / Signatory", style = MaterialTheme.typography.titleMedium)
+        SettingsTextField("Name", captainName) { captainName = it }
+        SettingsTextField("Position", captainTitle) { captainTitle = it }
+        AssetPickerRow("Signature PNG", captainSignatureUri.isNotBlank()) { signaturePicker.launch(arrayOf("image/*")) }
+
+        Button(
+            onClick = {
+                prefs.edit()
+                    .putString("republic", republic.trim())
+                    .putString("province", province.trim())
+                    .putString("municipality", municipality.trim())
+                    .putString("barangay", barangay.trim())
+                    .putString("id_heading", idHeading.trim())
+                    .putString("captain_name", captainName.trim())
+                    .putString("captain_title", captainTitle.trim())
+                    .apply()
+                savedMessage = "Settings saved"
+            },
+            modifier = Modifier.fillMaxWidth().height(52.dp)
+        ) { Text("Save Settings") }
+
+        if (savedMessage.isNotBlank()) {
+            Text(savedMessage, style = MaterialTheme.typography.bodyMedium)
+        }
+        Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun SettingsTextField(label: String, value: String, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true
+    )
+}
+
+@Composable
+private fun AssetPickerRow(label: String, isSelected: Boolean, onPick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyLarge)
+            Text(if (isSelected) "Saved on device" else "Not selected", style = MaterialTheme.typography.bodySmall)
+        }
+        OutlinedButton(onClick = onPick) { Text(if (isSelected) "Replace" else "Upload") }
     }
 }
 
