@@ -27,10 +27,30 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     bottomBar = {
                         NavigationBar {
-                            NavigationBarItem(screen == AppScreen.HOME, { screen = AppScreen.HOME }, { Icon(Icons.Default.Home, null) }, { Text("Home") })
-                            NavigationBarItem(screen == AppScreen.RECORDS, { screen = AppScreen.RECORDS }, { Icon(Icons.Default.People, null) }, { Text("Records") })
-                            NavigationBarItem(screen == AppScreen.GENERATE, { screen = AppScreen.GENERATE }, { Icon(Icons.Default.Badge, null) }, { Text("Generate") })
-                            NavigationBarItem(screen == AppScreen.SETTINGS, { screen = AppScreen.SETTINGS }, { Icon(Icons.Default.Settings, null) }, { Text("Settings") })
+                            NavigationBarItem(
+                                selected = screen == AppScreen.HOME,
+                                onClick = { screen = AppScreen.HOME },
+                                icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                                label = { Text("Home") }
+                            )
+                            NavigationBarItem(
+                                selected = screen == AppScreen.RECORDS,
+                                onClick = { screen = AppScreen.RECORDS },
+                                icon = { Icon(Icons.Default.People, contentDescription = "Records") },
+                                label = { Text("Records") }
+                            )
+                            NavigationBarItem(
+                                selected = screen == AppScreen.GENERATE,
+                                onClick = { screen = AppScreen.GENERATE },
+                                icon = { Icon(Icons.Default.Badge, contentDescription = "Generate") },
+                                label = { Text("Generate") }
+                            )
+                            NavigationBarItem(
+                                selected = screen == AppScreen.SETTINGS,
+                                onClick = { screen = AppScreen.SETTINGS },
+                                icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                                label = { Text("Settings") }
+                            )
                         }
                     }
                 ) { padding ->
