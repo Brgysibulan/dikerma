@@ -376,7 +376,7 @@ private fun tightDrawFront(context: Context, canvas: Canvas, r: RectF, e: Employ
     }
 
     val signatureRect = cardRect(r, 7.0f, 79.0f, 33.0f, 10.0f)
-    tightLoadBitmap(context, e.signatureUri)?.let { bitmap ->
+    tightLoadSignatureBitmap(context, e.signatureUri)?.let { bitmap ->
         tightDrawBitmapFit(canvas, bitmap, signatureRect)
         bitmap.recycleSafely()
     }
@@ -479,33 +479,33 @@ private fun tightDrawBack(context: Context, canvas: Canvas, r: RectF, e: Employe
     if (showBackDividers) canvas.drawLine(cardX(r, 7.0f), cardY(r, 64.0f), cardX(r, 78.0f), cardY(r, 64.0f), sectionLine)
 
     bold.textAlign = Paint.Align.LEFT
-    tightTextFit(canvas, "ISSUED BY:", cardX(r, 8.0f), cardY(r, 69.0f), mm(30f), bold, idFontSize(prefs, 7.5f), idFontSize(prefs, 5.8f))
+    tightTextFit(canvas, "ISSUED BY:", cardX(r, 8.0f), cardY(r, 67.0f), mm(30f), bold, idFontSize(prefs, 7.5f), idFontSize(prefs, 5.8f))
     tightTextFit(
         canvas,
         prefs.getString("issuer_name", "BLGU - SIBULAN") ?: "BLGU - SIBULAN",
-        cardX(r, 8.0f), cardY(r, 75.0f), mm(30f), bold,
+        cardX(r, 8.0f), cardY(r, 73.0f), mm(30f), bold,
         idFontSize(prefs, 8.0f), idFontSize(prefs, 6.0f)
     )
 
-    tightTextFit(canvas, "APPROVED BY:", cardX(r, 45.0f), cardY(r, 69.0f), mm(31f), bold, idFontSize(prefs, 7.5f), idFontSize(prefs, 5.8f))
-    val captainSigRect = cardRect(r, 47.0f, 69.5f, 27.0f, 8.0f)
-    tightLoadBitmap(context, prefs.getString("captain_signature_uri", null))?.let { bitmap ->
+    tightTextFit(canvas, "APPROVED BY:", cardX(r, 45.0f), cardY(r, 67.0f), mm(31f), bold, idFontSize(prefs, 7.5f), idFontSize(prefs, 5.8f))
+    val captainSigRect = cardRect(r, 47.0f, 67.5f, 27.0f, 8.0f)
+    tightLoadSignatureBitmap(context, prefs.getString("captain_signature_uri", null))?.let { bitmap ->
         tightDrawBitmapFit(canvas, bitmap, captainSigRect)
         bitmap.recycleSafely()
     }
     val captainName = prefs.getString("captain_name", "ROWENA A. TABO")?.ifBlank { "ROWENA A. TABO" } ?: "ROWENA A. TABO"
-    tightTextFit(canvas, captainName.uppercase(Locale.ENGLISH), cardX(r, 45.0f), cardY(r, 80.5f), mm(33f), bold, idFontSize(prefs, 7.4f), idFontSize(prefs, 5.4f))
+    tightTextFit(canvas, captainName.uppercase(Locale.ENGLISH), cardX(r, 45.0f), cardY(r, 78.5f), mm(33f), bold, idFontSize(prefs, 7.4f), idFontSize(prefs, 5.4f))
     normal.typeface = idTypeface(prefs, false)
     tightTextFit(
         canvas,
         prefs.getString("captain_title", "Punong Barangay") ?: "Punong Barangay",
-        cardX(r, 45.0f), cardY(r, 84.0f), mm(31f), normal,
+        cardX(r, 45.0f), cardY(r, 82.0f), mm(31f), normal,
         idFontSize(prefs, 6.2f), idFontSize(prefs, 4.8f)
     )
 
-    if (showBackDividers) canvas.drawLine(cardX(r, 7.0f), cardY(r, 85.5f), cardX(r, 78.0f), cardY(r, 85.5f), sectionLine)
+    if (showBackDividers) canvas.drawLine(cardX(r, 7.0f), cardY(r, 83.5f), cardX(r, 78.0f), cardY(r, 83.5f), sectionLine)
     bold.textAlign = Paint.Align.CENTER
-    tightTextFit(canvas, "IMPORTANT NOTICE", r.centerX(), cardY(r, 89.5f), mm(65f), bold, idFontSize(prefs, 7.8f), idFontSize(prefs, 5.8f))
+    tightTextFit(canvas, "IMPORTANT NOTICE", r.centerX(), cardY(r, 87.0f), mm(65f), bold, idFontSize(prefs, 7.8f), idFontSize(prefs, 5.8f))
     normal.textAlign = Paint.Align.LEFT
     val notices = listOf(
         "- This ID is non-transferable.",
@@ -513,7 +513,7 @@ private fun tightDrawBack(context: Context, canvas: Canvas, r: RectF, e: Employe
         "- If lost, report immediately to the Barangay Office.",
         "- Unauthorized use, alteration, or reproduction of this ID is prohibited."
     )
-    var noticeY = cardY(r, 93.0f)
+    var noticeY = cardY(r, 90.5f)
     notices.forEach { line ->
         val linesUsed = tightDrawWrappedText(
             canvas, line, cardX(r, 9.0f), noticeY, mm(67f), normal,
@@ -531,9 +531,9 @@ private fun tightDrawBack(context: Context, canvas: Canvas, r: RectF, e: Employe
     val officePhone = prefs.getString("office_phone", "0970 972 3363") ?: "0970 972 3363"
     tightTextFit(
         canvas, "Barangay Hall, Sitio Centro, Barangay Sibulan, Sta. Cruz, Davao del Sur",
-        r.centerX(), cardY(r, 109.8f), mm(75f), footer, idFontSize(prefs, 5.1f), idFontSize(prefs, 3.9f)
+        r.centerX(), cardY(r, 108.0f), mm(75f), footer, idFontSize(prefs, 5.4f), idFontSize(prefs, 4.1f)
     )
-    tightTextFit(canvas, "$officeEmail  |  $officePhone", r.centerX(), cardY(r, 113.0f), mm(75f), footer, idFontSize(prefs, 5.0f), idFontSize(prefs, 4.0f))
+    tightTextFit(canvas, "$officeEmail  |  $officePhone", r.centerX(), cardY(r, 111.5f), mm(75f), footer, idFontSize(prefs, 5.3f), idFontSize(prefs, 4.1f))
 }
 
 private fun tightDrawTemplate(context: Context, canvas: Canvas, r: RectF, uri: String?, front: Boolean) {
@@ -773,6 +773,60 @@ private fun tightLoadBitmap(context: Context, uriString: String?): Bitmap? {
         if (scaled !== decoded) decoded.recycleSafely()
         scaled
     }.getOrNull()
+}
+
+private fun tightLoadSignatureBitmap(context: Context, uriString: String?): Bitmap? {
+    val bitmap = tightLoadBitmap(context, uriString) ?: return null
+    if (!isAppProcessedSignature(context, uriString)) return bitmap
+
+    // Repair previously auto-cleaned signatures that were saved with an opaque,
+    // uniform rectangle. Keep Original uploads are deliberately left untouched.
+    return removeUniformSignatureBackground(bitmap).also { cleaned ->
+        if (cleaned !== bitmap) bitmap.recycleSafely()
+    }
+}
+
+private fun isAppProcessedSignature(context: Context, uriString: String?): Boolean {
+    if (uriString.isNullOrBlank()) return false
+    return runCatching {
+        val uri = Uri.parse(uriString)
+        uri.scheme == "content" &&
+            uri.authority == "${context.packageName}.fileprovider" &&
+            uri.lastPathSegment?.startsWith("signature_") == true
+    }.getOrDefault(false)
+}
+
+private fun removeUniformSignatureBackground(source: Bitmap): Bitmap {
+    if (source.width < 2 || source.height < 2) return source
+    val corners = intArrayOf(
+        source.getPixel(0, 0),
+        source.getPixel(source.width - 1, 0),
+        source.getPixel(0, source.height - 1),
+        source.getPixel(source.width - 1, source.height - 1)
+    )
+    if (corners.any { Color.alpha(it) < 245 }) return source
+
+    val bgR = corners.map { Color.red(it) }.sorted()[corners.size / 2]
+    val bgG = corners.map { Color.green(it) }.sorted()[corners.size / 2]
+    val bgB = corners.map { Color.blue(it) }.sorted()[corners.size / 2]
+    val pixels = IntArray(source.width * source.height)
+    source.getPixels(pixels, 0, source.width, 0, 0, source.width, source.height)
+    var transparentCount = 0
+    pixels.indices.forEach { index ->
+        val pixel = pixels[index]
+        val difference = maxOf(
+            kotlin.math.abs(Color.red(pixel) - bgR),
+            kotlin.math.abs(Color.green(pixel) - bgG),
+            kotlin.math.abs(Color.blue(pixel) - bgB)
+        )
+        val alpha = ((difference - 12) * 4.5f).toInt().coerceIn(0, 255)
+        if (alpha == 0) transparentCount++
+        pixels[index] = Color.argb(alpha, 0, 0, 0)
+    }
+    if (transparentCount < pixels.size / 5) return source
+    return Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888).apply {
+        setPixels(pixels, 0, source.width, 0, 0, source.width, source.height)
+    }
 }
 
 private fun Bitmap.recycleSafely() {

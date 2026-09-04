@@ -1,4 +1,4 @@
-# Current Note — Barangay ID Maker v0.6.0
+# Current Note — Barangay ID Maker v0.6.1
 
 Date: September 4, 2026
 
@@ -77,7 +77,7 @@ Both ID Photo and Employee Signature support:
 
 ### Auto Clean
 - Photo: plain-background removal, white replacement, validation and auto-crop
-- Signature: light-paper removal and transparent PNG output
+- Signature: plain light/dark-background removal and transparent PNG output
 - Fully offline
 
 ### Keep Original
@@ -103,6 +103,8 @@ Both ID Photo and Employee Signature support:
 - Issued By and Approved By occupy balanced left/right blocks.
 - Important Notice uses small dash marks and the complete approved wording.
 - The footer includes the Barangay Hall address, email, and telephone number inside safe margins.
+- The Important Notice and footer were moved upward after review of the first v0.6.0 generated-PDF screenshot.
+- Older app-generated signature files with an opaque uniform black rectangle are cleaned during PDF rendering; Keep Original files remain untouched.
 
 ## What to Check in the Next PDF / Actual Print
 1. Measure each front/back ID and confirm **85 × 115 mm** at Actual Size / 100%.

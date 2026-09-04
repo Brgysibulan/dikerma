@@ -1,13 +1,13 @@
 # Barangay ID Maker
 
-## App Description — v0.6.0
+## App Description — v0.6.1
 A **fully offline Android Barangay Employee ID Maker** for Barangay Sibulan. The app stores employee records on-device, accepts employee photos and signatures from Camera or Gallery/files, supports optional offline background cleanup, stores uploaded WEBV3LITE QR images, and generates print-ready A4 PDFs for front/back employee IDs.
 
 The current physical ID size is **85 mm × 115 mm portrait** for both the front and back. The uploaded front/back artwork is treated as the actual visual background. The app should only place dynamic data on top of that artwork unless no background design has been uploaded.
 
 ## Current Version
-- Version name: **0.6.0**
-- Version code: **7**
+- Version name: **0.6.1**
+- Version code: **8**
 - Android minSdk: 26
 - Android targetSdk: 35
 
@@ -101,7 +101,7 @@ Use when the app should process the selected image locally.
 - Fully offline.
 
 **Employee Signature**
-- Removes light paper/background.
+- Removes a plain light or dark background.
 - Keeps dark signature strokes.
 - Auto-crops the signature.
 - Saves the processed result as a transparent PNG.
@@ -129,6 +129,8 @@ For the cleanest result:
 7. Generate the PDF and verify that no black/white box appears behind the signature.
 
 The PDF renderer fits signature images proportionally.
+
+App-generated signatures from older builds are also checked while rendering so a uniform opaque black rectangle can be removed without changing Keep Original uploads.
 
 ## QR Workflow
 QR generation is intentionally not required inside this app.

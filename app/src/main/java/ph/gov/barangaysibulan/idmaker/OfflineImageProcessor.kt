@@ -243,7 +243,9 @@ internal object OfflineImageProcessor {
             input.getPixels(pixels, 0, width, 0, 0, width, height)
             val borderSamples = collectBorderSamples(pixels, width, height)
             if (borderSamples.isEmpty()) return@withContext null
-            val paperLum = medianLuminance(borderSamples).coerceIn(150, 255)
+            val background = medianColor(borderSamples)
+            val spread = borderColorSpread(borderSamples, background)
+            val threshold = (spread + 18).coerceIn(20, 72)
 
             val out = IntArray(pixels.size)
             var minX = width
@@ -254,12 +256,10 @@ internal object OfflineImageProcessor {
 
             for (i in pixels.indices) {
                 val c = pixels[i]
-                val r = Color.red(c)
-                val g = Color.green(c)
-                val b = Color.blue(c)
-                val lum = luminance(r, g, b)
-                val darkness = paperLum - lum
-                val alpha = ((darkness - 14) * 3.2f).toInt().coerceIn(0, 255)
+                // Use distance from the plain edge color instead of assuming white paper.
+                // This also cleans a light signature photographed on a dark solid surface.
+                val difference = maxChannelDistance(c, background)
+                val alpha = ((difference - threshold) * 4.2f).toInt().coerceIn(0, 255)
                 out[i] = Color.argb(alpha, 0, 0, 0)
                 if (alpha >= 46) {
                     val x = i % width
@@ -296,7 +296,7 @@ internal object OfflineImageProcessor {
 
             ProcessedImage(
                 uri = uri,
-                note = "Processed offline: paper/background removed, signature auto-cropped, and saved as transparent PNG."
+                note = "Processed offline: plain light/dark background removed, signature auto-cropped, and saved as transparent PNG."
             )
         } finally {
             if (!input.isRecycled) input.recycle()
@@ -506,19 +506,6 @@ internal object OfflineImageProcessor {
         abs(Color.red(a) - Color.red(b)),
         max(abs(Color.green(a) - Color.green(b)), abs(Color.blue(a) - Color.blue(b)))
     )
-
-    private fun medianLuminance(samples: IntArray): Int {
-        val values = IntArray(samples.size)
-        for (i in samples.indices) {
-            val c = samples[i]
-            values[i] = luminance(Color.red(c), Color.green(c), Color.blue(c))
-        }
-        values.sort()
-        return values[values.size / 2]
-    }
-
-    private fun luminance(r: Int, g: Int, b: Int): Int =
-        (0.2126f * r + 0.7152f * g + 0.0722f * b).toInt().coerceIn(0, 255)
 
     private fun scaleDown(bitmap: Bitmap, maxDimension: Int): Bitmap {
         val maxSide = max(bitmap.width, bitmap.height)

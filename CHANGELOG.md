@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.1 — September 4, 2026
+
+Screenshot-driven correction after the first v0.6.0 PDF test.
+
+- Fixed Auto Clean signatures photographed on a plain dark background.
+- Added PDF-time repair for older app-generated signature PNGs with a uniform opaque rectangle.
+- Keep Original signature uploads are still rendered unchanged.
+- Moved the back Issued/Approved, Important Notice, and footer groups upward.
+- Increased footer readability and bottom safe margin.
+- Android version bumped to **0.6.1 / versionCode 8**.
+
 ## 0.6.0 — September 4, 2026
 
 Layout-safety and typography pass for the locked 85 × 115 mm background-first generator.
