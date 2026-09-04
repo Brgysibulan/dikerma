@@ -83,13 +83,21 @@ private fun HomeScreen(onRecords: () -> Unit, onGenerate: () -> Unit, onSettings
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text("Barangay ID Maker", style = MaterialTheme.typography.headlineMedium)
-        Text("Offline • Single-user • CR80 • A4 PDF", style = MaterialTheme.typography.bodyMedium)
-        Button(onClick = onRecords, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Employee Records") }
-        Button(onClick = onGenerate, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Generate ID") }
-        OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Settings") }
+        Text("Create and print employee IDs offline.", style = MaterialTheme.typography.bodyLarge)
+
+        Button(onClick = onRecords, modifier = Modifier.fillMaxWidth().height(58.dp)) {
+            Text("Employee Records")
+        }
+        Button(onClick = onGenerate, modifier = Modifier.fillMaxWidth().height(58.dp)) {
+            Text("Generate ID")
+        }
+        OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth().height(58.dp)) {
+            Text("ID Setup & Settings")
+        }
+
         HorizontalDivider()
-        Text("Permission-safe setup", style = MaterialTheme.typography.titleMedium)
-        Text("No broad storage permission. Images use Android's document picker and PDFs will use Save As/Create Document.")
+        Text("Quick Setup", style = MaterialTheme.typography.titleMedium)
+        Text("1. Upload the front and back ID design in Settings.\n2. Upload Logo 1, Logo 2 and the Punong Barangay signature.\n3. Add employee records.\n4. Select an employee and generate the A4 PDF.")
     }
 }
 
@@ -106,6 +114,8 @@ private fun SettingsScreen() {
     var captainName by remember { mutableStateOf(prefs.getString("captain_name", "") ?: "") }
     var captainTitle by remember { mutableStateOf(prefs.getString("captain_title", "PUNONG BARANGAY") ?: "") }
 
+    var frontTemplateUri by remember { mutableStateOf(prefs.getString("front_template_uri", "") ?: "") }
+    var backTemplateUri by remember { mutableStateOf(prefs.getString("back_template_uri", "") ?: "") }
     var logo1Uri by remember { mutableStateOf(prefs.getString("logo1_uri", "") ?: "") }
     var logo2Uri by remember { mutableStateOf(prefs.getString("logo2_uri", "") ?: "") }
     var captainSignatureUri by remember { mutableStateOf(prefs.getString("captain_signature_uri", "") ?: "") }
@@ -120,6 +130,18 @@ private fun SettingsScreen() {
         prefs.edit().putString(key, uriString).apply()
     }
 
+    val frontTemplatePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            frontTemplateUri = it.toString()
+            persistPickedUri(frontTemplateUri, "front_template_uri")
+        }
+    }
+    val backTemplatePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            backTemplateUri = it.toString()
+            persistPickedUri(backTemplateUri, "back_template_uri")
+        }
+    }
     val logo1Picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             logo1Uri = it.toString()
@@ -143,9 +165,15 @@ private fun SettingsScreen() {
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("ID Settings", style = MaterialTheme.typography.headlineSmall)
-        Text("One-time setup. These values are saved only on this device.", style = MaterialTheme.typography.bodyMedium)
+        Text("ID Setup & Settings", style = MaterialTheme.typography.headlineSmall)
+        Text("Set these once. The app will reuse them automatically when generating IDs.", style = MaterialTheme.typography.bodyMedium)
 
+        Text("ID Design", style = MaterialTheme.typography.titleMedium)
+        Text("Upload the blank front and back design. Keep both images in the same fixed CR80 layout.", style = MaterialTheme.typography.bodySmall)
+        AssetPickerRow("Front ID Design", frontTemplateUri.isNotBlank()) { frontTemplatePicker.launch(arrayOf("image/*")) }
+        AssetPickerRow("Back ID Design", backTemplateUri.isNotBlank()) { backTemplatePicker.launch(arrayOf("image/*")) }
+
+        HorizontalDivider()
         Text("Logos", style = MaterialTheme.typography.titleMedium)
         AssetPickerRow("Logo 1", logo1Uri.isNotBlank()) { logo1Picker.launch(arrayOf("image/*")) }
         AssetPickerRow("Logo 2", logo2Uri.isNotBlank()) { logo2Picker.launch(arrayOf("image/*")) }
