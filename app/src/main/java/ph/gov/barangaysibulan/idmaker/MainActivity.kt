@@ -119,12 +119,7 @@ private fun HomeScreen(onRecords: () -> Unit, onGenerate: () -> Unit, onSettings
                 modifier = Modifier.size(58.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        "B",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 26.sp
-                    )
+                    Text("B", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 26.sp)
                 }
             }
             Column(Modifier.weight(1f)) {
@@ -141,15 +136,9 @@ private fun HomeScreen(onRecords: () -> Unit, onGenerate: () -> Unit, onSettings
             )
         }
 
-        Button(onClick = onRecords, modifier = Modifier.fillMaxWidth().height(58.dp)) {
-            Text("Employee Records")
-        }
-        Button(onClick = onGenerate, modifier = Modifier.fillMaxWidth().height(58.dp)) {
-            Text("Generate ID")
-        }
-        OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth().height(58.dp)) {
-            Text("ID Setup & Settings")
-        }
+        Button(onClick = onRecords, modifier = Modifier.fillMaxWidth().height(58.dp)) { Text("Employee Records") }
+        Button(onClick = onGenerate, modifier = Modifier.fillMaxWidth().height(58.dp)) { Text("Generate ID") }
+        OutlinedButton(onClick = onSettings, modifier = Modifier.fillMaxWidth().height(58.dp)) { Text("ID Setup & Settings") }
 
         HorizontalDivider()
         Text("Quick Setup", style = MaterialTheme.typography.titleMedium)
@@ -187,6 +176,18 @@ private fun SettingsScreen() {
     var logo1Uri by remember { mutableStateOf(prefs.getString("logo1_uri", "") ?: "") }
     var logo2Uri by remember { mutableStateOf(prefs.getString("logo2_uri", "") ?: "") }
     var captainSignatureUri by remember { mutableStateOf(prefs.getString("captain_signature_uri", "") ?: "") }
+
+    var outlineCutGuide by remember { mutableStateOf(prefs.getBoolean("outline_cut_guide", true)) }
+    var outlinePhoto by remember { mutableStateOf(prefs.getBoolean("outline_photo", false)) }
+    var outlineInfoDividers by remember { mutableStateOf(prefs.getBoolean("outline_info_dividers", false)) }
+    var outlineSignatureLine by remember { mutableStateOf(prefs.getBoolean("outline_signature_line", false)) }
+    var outlineQr by remember { mutableStateOf(prefs.getBoolean("outline_qr", false)) }
+    var outlineBackDividers by remember { mutableStateOf(prefs.getBoolean("outline_back_dividers", false)) }
+    var outlineThickness by remember { mutableFloatStateOf(prefs.getFloat("outline_thickness", 0.65f)) }
+
+    var fontFamily by remember { mutableStateOf(prefs.getString("font_family", "sans") ?: "sans") }
+    var fontScale by remember { mutableFloatStateOf(prefs.getFloat("font_scale", 1.0f)) }
+
     var savedMessage by remember { mutableStateOf("") }
 
     fun persistPickedUri(uriString: String, key: String) {
@@ -239,7 +240,7 @@ private fun SettingsScreen() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("ID Setup & Settings", style = MaterialTheme.typography.headlineSmall)
-        Text("Set these once. The app reuses the saved assets automatically when generating IDs.", style = MaterialTheme.typography.bodyMedium)
+        Text("The uploaded design stays as the background. Overlay lines and typography can be controlled here.", style = MaterialTheme.typography.bodyMedium)
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -253,9 +254,30 @@ private fun SettingsScreen() {
         }
 
         Text("ID Design", style = MaterialTheme.typography.titleMedium)
-        Text("Upload the blank front and back design using the same CR80 portrait layout (53.98 × 85.60 mm ratio).", style = MaterialTheme.typography.bodySmall)
+        Text("Upload the blank front and back artwork for the 85 × 115 mm portrait ID. The app will not add decorative panels over an uploaded design.", style = MaterialTheme.typography.bodySmall)
         AssetPickerRow("Front ID Design", frontTemplateUri.isNotBlank()) { frontTemplatePicker.launch(arrayOf("image/*")) }
         AssetPickerRow("Back ID Design", backTemplateUri.isNotBlank()) { backTemplatePicker.launch(arrayOf("image/*")) }
+
+        HorizontalDivider()
+        Text("Outline Controls", style = MaterialTheme.typography.titleMedium)
+        Text("Turn each overlay line on or off independently.", style = MaterialTheme.typography.bodySmall)
+        SettingsSwitchRow("Outer cut guide", outlineCutGuide) { outlineCutGuide = it }
+        SettingsSwitchRow("Photo outline", outlinePhoto) { outlinePhoto = it }
+        SettingsSwitchRow("Employee info divider lines", outlineInfoDividers) { outlineInfoDividers = it }
+        SettingsSwitchRow("Signature line", outlineSignatureLine) { outlineSignatureLine = it }
+        SettingsSwitchRow("QR outline", outlineQr) { outlineQr = it }
+        SettingsSwitchRow("Back section divider lines", outlineBackDividers) { outlineBackDividers = it }
+        Text("Outline thickness: ${"%.2f".format(outlineThickness)} pt", style = MaterialTheme.typography.bodySmall)
+        Slider(value = outlineThickness, onValueChange = { outlineThickness = it }, valueRange = 0.30f..1.50f)
+
+        HorizontalDivider()
+        Text("Typography Controls", style = MaterialTheme.typography.titleMedium)
+        Text("One font family is used consistently across front and back. Only size and weight change by hierarchy.", style = MaterialTheme.typography.bodySmall)
+        FontFamilyChoice("Sans Serif", "sans", fontFamily) { fontFamily = it }
+        FontFamilyChoice("Serif", "serif", fontFamily) { fontFamily = it }
+        FontFamilyChoice("Monospace", "monospace", fontFamily) { fontFamily = it }
+        Text("Font scale: ${"%.0f".format(fontScale * 100)}%", style = MaterialTheme.typography.bodySmall)
+        Slider(value = fontScale, onValueChange = { fontScale = it }, valueRange = 0.85f..1.20f)
 
         HorizontalDivider()
         Text("Logos", style = MaterialTheme.typography.titleMedium)
@@ -286,6 +308,15 @@ private fun SettingsScreen() {
                     .putString("id_heading", idHeading.trim())
                     .putString("captain_name", captainName.trim())
                     .putString("captain_title", captainTitle.trim())
+                    .putBoolean("outline_cut_guide", outlineCutGuide)
+                    .putBoolean("outline_photo", outlinePhoto)
+                    .putBoolean("outline_info_dividers", outlineInfoDividers)
+                    .putBoolean("outline_signature_line", outlineSignatureLine)
+                    .putBoolean("outline_qr", outlineQr)
+                    .putBoolean("outline_back_dividers", outlineBackDividers)
+                    .putFloat("outline_thickness", outlineThickness)
+                    .putString("font_family", fontFamily)
+                    .putFloat("font_scale", fontScale)
                     .apply()
                 savedMessage = "Settings saved"
             },
@@ -296,6 +327,29 @@ private fun SettingsScreen() {
             Text(savedMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
         }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun SettingsSwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, modifier = Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun FontFamilyChoice(label: String, value: String, selected: String, onSelect: (String) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected == value, onClick = { onSelect(value) })
+        Text(label)
     }
 }
 
