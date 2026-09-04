@@ -33,6 +33,11 @@ internal object OfflineImageProcessor {
     private const val MAX_SIGNATURE_INPUT = 1800
     private const val MAX_PHOTO_OUTPUT = 1000
     private const val MAX_SIGNATURE_OUTPUT = 1400
+    private const val VALIDATION_SIDE = 256
+    private const val MIN_PHOTO_FOREGROUND_FRACTION = 0.035f
+    private const val MIN_PHOTO_BBOX_DENSITY = 0.16f
+    private const val MIN_PROCESSED_PHOTO_CONTENT = 0.12f
+    private const val MIN_PROCESSED_BBOX_DENSITY = 0.18f
     private val OWNED_IMAGE_NAME = Regex("^(id_photo|signature)_\\d+\\.(jpg|png)$")
 
     fun createCameraTarget(context: Context, prefix: String): CameraTarget {
@@ -46,10 +51,7 @@ internal object OfflineImageProcessor {
         return CameraTarget(uri, file)
     }
 
-    /**
-     * Deletes only images created by this processor inside filesDir/processed_images.
-     * External Gallery/Documents URIs are never deleted.
-     */
+    /** Deletes only app-generated processed images. Gallery/Documents originals are never deleted. */
     fun deleteProcessed(context: Context, uriString: String?): Boolean {
         if (uriString.isNullOrBlank()) return false
         return runCatching {
@@ -64,6 +66,64 @@ internal object OfflineImageProcessor {
             val file = File(dir, fileName)
             file.exists() && file.delete()
         }.getOrDefault(false)
+    }
+
+    /**
+     * Lightweight guard for existing records. Processed ID photos should contain a substantial,
+     * connected person-shaped foreground. Sparse ink-like content (for example a signature) fails.
+     */
+    fun isLikelyIdPhoto(context: Context, uriString: String?): Boolean {
+        if (uriString.isNullOrBlank()) return false
+        val bitmap = decodeValidationBitmap(context, Uri.parse(uriString)) ?: return false
+        return try {
+            val width = bitmap.width
+            val height = bitmap.height
+            if (width < 24 || height < 24) return false
+
+            val pixels = IntArray(width * height)
+            bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+
+            var count = 0
+            var minX = width
+            var minY = height
+            var maxX = -1
+            var maxY = -1
+
+            for (i in pixels.indices) {
+                val c = pixels[i]
+                val alpha = Color.alpha(c)
+                val distanceFromWhite = max(
+                    255 - Color.red(c),
+                    max(255 - Color.green(c), 255 - Color.blue(c))
+                )
+                if (alpha >= 48 && distanceFromWhite >= 32) {
+                    val x = i % width
+                    val y = i / width
+                    count++
+                    if (x < minX) minX = x
+                    if (x > maxX) maxX = x
+                    if (y < minY) minY = y
+                    if (y > maxY) maxY = y
+                }
+            }
+
+            if (count <= 0 || maxX <= minX || maxY <= minY) return false
+            val boxW = maxX - minX + 1
+            val boxH = maxY - minY + 1
+            val total = width * height
+            val boxArea = boxW * boxH
+            val contentFraction = count.toFloat() / total.toFloat()
+            val boxDensity = count.toFloat() / boxArea.toFloat()
+            val widthFraction = boxW.toFloat() / width.toFloat()
+            val heightFraction = boxH.toFloat() / height.toFloat()
+
+            contentFraction >= MIN_PROCESSED_PHOTO_CONTENT &&
+                boxDensity >= MIN_PROCESSED_BBOX_DENSITY &&
+                widthFraction >= 0.22f &&
+                heightFraction >= 0.22f
+        } finally {
+            if (!bitmap.isRecycled) bitmap.recycle()
+        }
     }
 
     suspend fun processIdPhoto(context: Context, source: Uri): ProcessedImage? = withContext(Dispatchers.IO) {
@@ -109,11 +169,27 @@ internal object OfflineImageProcessor {
                 return@withContext null
             }
 
+            val subjectW = maxX - minX + 1
+            val subjectH = maxY - minY + 1
+            val bboxArea = subjectW * subjectH
+            val foregroundFraction = foregroundCount.toFloat() / pixels.size.toFloat()
+            val bboxDensity = foregroundCount.toFloat() / bboxArea.toFloat()
+            val widthFraction = subjectW.toFloat() / width.toFloat()
+            val heightFraction = subjectH.toFloat() / height.toFloat()
+
+            // Reject sparse line-art/signature-like images before they can become an ID photo.
+            if (
+                foregroundFraction < MIN_PHOTO_FOREGROUND_FRACTION ||
+                bboxDensity < MIN_PHOTO_BBOX_DENSITY ||
+                widthFraction < 0.18f ||
+                heightFraction < 0.18f
+            ) {
+                return@withContext null
+            }
+
             val cleaned = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             cleaned.setPixels(cleanedPixels, 0, width, 0, 0, width, height)
 
-            val subjectW = maxX - minX + 1
-            val subjectH = maxY - minY + 1
             val pad = (max(subjectW, subjectH) * 0.09f).toInt().coerceAtLeast(12)
             val cropLeft = (minX - pad).coerceAtLeast(0)
             val cropTop = (minY - pad).coerceAtLeast(0)
@@ -122,6 +198,7 @@ internal object OfflineImageProcessor {
             val cropW = cropRight - cropLeft
             val cropH = cropBottom - cropTop
             val cropped = Bitmap.createBitmap(cleaned, cropLeft, cropTop, cropW, cropH)
+            if (!cleaned.isRecycled) cleaned.recycle()
 
             val squareSide = max(cropW, cropH)
             val square = Bitmap.createBitmap(squareSide, squareSide, Bitmap.Config.ARGB_8888)
@@ -134,17 +211,20 @@ internal object OfflineImageProcessor {
                     Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
                 )
             }
+            if (!cropped.isRecycled) cropped.recycle()
 
             val output = scaleDown(square, MAX_PHOTO_OUTPUT)
+            if (output !== square && !square.isRecycled) square.recycle()
             val uri = saveProcessed(context, output, "id_photo", Bitmap.CompressFormat.JPEG, 95)
-                ?: return@withContext null
+            if (!output.isRecycled) output.recycle()
+            uri ?: return@withContext null
 
             ProcessedImage(
                 uri = uri,
                 note = if (spread > 48) {
-                    "Processed offline. Background had some variation; check the preview and retake against a flatter plain color if edges look rough."
+                    "Processed offline. Background had some variation; check the preview and choose another portrait if edges look rough."
                 } else {
-                    "Processed offline: plain background replaced with pure white and photo auto-cropped."
+                    "Processed offline: portrait validated, plain background replaced with pure white, and photo auto-cropped."
                 }
             )
         } finally {
@@ -207,9 +287,12 @@ internal object OfflineImageProcessor {
             val right = (maxX + pad + 1).coerceAtMost(width)
             val bottom = (maxY + pad + 1).coerceAtMost(height)
             val cropped = Bitmap.createBitmap(signature, left, top, right - left, bottom - top)
+            if (!signature.isRecycled) signature.recycle()
             val output = scaleDown(cropped, MAX_SIGNATURE_OUTPUT)
+            if (output !== cropped && !cropped.isRecycled) cropped.recycle()
             val uri = saveProcessed(context, output, "signature", Bitmap.CompressFormat.PNG, 100)
-                ?: return@withContext null
+            if (!output.isRecycled) output.recycle()
+            uri ?: return@withContext null
 
             ProcessedImage(
                 uri = uri,
@@ -227,6 +310,34 @@ internal object OfflineImageProcessor {
                 BitmapFactory.decodeStream(stream)
             }
         }.getOrNull()
+    }
+
+    private fun decodeValidationBitmap(context: Context, uri: Uri): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        var sample = 1
+        while (max(bounds.outWidth / sample, bounds.outHeight / sample) > VALIDATION_SIDE * 2) {
+            sample *= 2
+        }
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = sample
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+        val decoded = context.contentResolver.openInputStream(uri)?.use {
+            BitmapFactory.decodeStream(it, null, options)
+        } ?: return null
+        val maxSide = max(decoded.width, decoded.height)
+        if (maxSide <= VALIDATION_SIDE) return decoded
+        val scale = VALIDATION_SIDE.toFloat() / maxSide.toFloat()
+        val scaled = Bitmap.createScaledBitmap(
+            decoded,
+            max(1, (decoded.width * scale).toInt()),
+            max(1, (decoded.height * scale).toInt()),
+            true
+        )
+        if (scaled !== decoded && !decoded.isRecycled) decoded.recycle()
+        return scaled
     }
 
     private fun decodeBounded(context: Context, uri: Uri, maxDimension: Int): Bitmap? {
