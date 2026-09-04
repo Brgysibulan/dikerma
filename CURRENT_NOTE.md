@@ -1,49 +1,72 @@
-# Current Note — Barangay ID Maker v0.4.0
+# Current Note — Barangay ID Maker v0.5.0
 
 Date: September 4, 2026
 
 ## Current Build Purpose
-Version 0.4.0 is the CR80 layout-reset build for real PDF/print testing. The internal front/back composition now uses millimeter-based positions inside the exact 53.98 × 85.60 mm card.
+The current build is for real PDF/print testing of the corrected **85 × 115 mm portrait ID** layout with user-controlled outlines and consistent typography.
+
+The most important design rule now is:
+
+> **Uploaded front/back artwork is the design. The app should only place dynamic data on top of it.**
+
+The app should not add extra decorative header/footer/body panels over an uploaded background.
 
 ## Locked Physical Size
 - A4 Portrait: 210 × 297 mm
-- CR80 portrait card: **53.98 × 85.60 mm**
-- Slot 1: Person 1 Front
-- Slot 2: Person 1 Back
-- Slot 3: Person 2 Front
-- Slot 4: Person 2 Back
+- Each front/back ID: **85 × 115 mm**
+- Width: **8.5 cm**
+- Height: **11.5 cm**
+- Top-left: Person 1 Front
+- Top-right: Person 1 Back
+- Bottom-left: Person 2 Front
+- Bottom-right: Person 2 Back
 - Left placement anchor: 19.97 mm
 - Right placement anchor: 105.02 mm
 - Top-row anchor: 14.77 mm
 - Bottom-row anchor: 168.62 mm
 
-The old 85.01 × 115.05 mm zones remain only as placement anchors. **The visible cut guide now follows the actual CR80 53.98 × 85.60 mm card boundary.**
+If Person 2 is not selected, the bottom row stays unused and no empty bottom-row cut boxes are drawn.
 
-## Front ID — v0.4.0
-- Government header + Logo 1 / Logo 2
-- BARANGAY EMPLOYEE ID
-- Employee photo: **25 × 30 mm**
-- Photo uses center-crop without stretching
-- Name / Designation / ID No. in a dedicated right-side block
-- Employee signature lower-left
-- CARDHOLDER'S SIGNATURE label
-- Uploaded QR image: **14 × 14 mm target area**
-- SCAN TO VERIFY
-- VERIFY ID VALIDITY
+## Background-First Rendering
+When a front/back background is uploaded:
+- No extra app-generated decorative green header is added.
+- No app-generated decorative footer band is added.
+- No translucent body panel is added over the artwork.
+- Dynamic data only is rendered over the background.
 
-## Back ID — v0.4.0
-- No repeated government header
-- Date of Birth
-- Sex
-- Civil Status
-- Address with wrapped text
-- IDENTIFICATION section
-- Bona fide employee statement
-- ISSUED BY: BLGU - SIBULAN
-- APPROVED BY
-- Punong Barangay signature, name and title
-- IMPORTANT NOTICE
-- Barangay Hall contact footer
+A basic fallback design may be used only if the corresponding uploaded background is missing.
+
+## Outline Controls
+Settings now provides independent controls for:
+- Outer cut guide
+- Photo outline
+- Employee info divider lines
+- Signature line
+- QR outline
+- Back section divider lines
+- Outline thickness: 0.30–1.50 pt
+
+Current defaults:
+- Outer cut guide: **On**
+- Photo outline: **Off**
+- Employee info divider lines: **Off**
+- Signature line: **Off**
+- QR outline: **Off**
+- Back section divider lines: **Off**
+
+The goal is to avoid over-outlining an ID when the uploaded artwork already contains its own visual structure.
+
+## Typography Controls
+The ID now uses one consistent font family across front and back.
+
+Available choices:
+- Sans Serif — default
+- Serif
+- Monospace
+
+A global Font Scale slider is available from **85% to 120%**.
+
+Headings, labels and values may use different sizes/weights, but the font family stays uniform throughout the ID.
 
 ## Photo & Signature Modes
 Both ID Photo and Employee Signature support:
@@ -59,31 +82,39 @@ Both ID Photo and Employee Signature support:
 - Strongly recommended for ready transparent PNG signatures
 - Camera capture currently uses Auto Clean
 
-## Recommended Signature Test
-1. Prepare a transparent PNG signature.
-2. Records → employee → Employee Signature.
-3. Choose **Keep Original**.
-4. Gallery / Upload the PNG.
-5. Save employee.
-6. Generate PDF.
-7. Confirm no black/white rectangle appears behind the signature.
+## QR Behavior
+- QR remains upload-based from WEBV3LITE.
+- No automatic QR generator is required in the app.
+- The uploaded QR is stored with the employee record and rendered on the front ID.
 
 ## What to Check in the Next PDF / Actual Print
-1. Measure cut boundary: **53.98 × 85.60 mm**
-2. Confirm photo is **25 × 30 mm** and face is not distorted
-3. Check header readability at physical size
-4. Check Name / Designation / ID No. alignment
-5. Check transparent employee signature and label
-6. Confirm QR scans reliably at the new 14 × 14 mm target size
-7. Check back address wrapping
-8. Check Identification paragraph readability
-9. Check Punong Barangay signature/name/title spacing
-10. Check Important Notice readability
-11. Check footer readability
-12. Confirm Person 1 front/back and optional Person 2 front/back remain paired correctly
+1. Measure each front/back ID and confirm **85 × 115 mm** at Actual Size / 100%.
+2. Confirm uploaded background artwork is not covered by extra app decorative panels.
+3. Check overall front alignment and visual balance.
+4. Check photo placement against the background artwork.
+5. Check Name / Designation / Employee No. alignment and readability.
+6. Test a transparent PNG employee signature using Keep Original.
+7. Confirm no black/white rectangle appears behind the signature.
+8. Confirm QR scans reliably.
+9. Turn Photo outline on/off and verify the PDF changes.
+10. Turn Employee info dividers on/off and verify the PDF changes.
+11. Turn Signature line and QR outline on/off independently.
+12. Turn Back section dividers on/off independently.
+13. Adjust outline thickness and verify it is applied consistently.
+14. Test Sans Serif / Serif / Monospace and confirm one family is used throughout the ID.
+15. Test Font Scale without breaking alignment.
+16. Confirm back text, Identification section and Important Notice remain readable.
+17. With no Person 2 selected, confirm the bottom row has no empty cut boxes.
 
 ## Printing Rule
-Print at **Actual Size / 100%**. Never use **Fit to Page** for size validation.
+Print at **Actual Size / 100%**. Never use **Fit to Page** for physical-size validation.
 
 ## Offline Policy
-The app remains fully offline. QR remains upload-based from WEBV3LITE. INTERNET permission remains removed and is checked by GitHub Actions.
+The app remains fully offline. INTERNET permission is removed and GitHub Actions verifies the merged manifest before publishing the debug APK artifact.
+
+## Current Priority
+The next priority is visual fine-tuning based on real generated-PDF screenshots and actual print measurements, while keeping these locked:
+- 85 × 115 mm physical ID size
+- A4 front/back pairing
+- uploaded-background-first design rule
+- fully offline architecture
