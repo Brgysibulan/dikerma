@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.6.0 — September 4, 2026
+
+Layout-safety and typography pass for the locked 85 × 115 mm background-first generator.
+
+### Front composition
+- Rebalanced the two-logo header and centered its heading hierarchy.
+- Gave Name, Designation, and Employee No. a wider dedicated column.
+- Added controlled two-line fitting for long names and designations.
+- Separated the lower-left employee signature and lower-right QR blocks.
+- Moved `SCAN TO VERIFY` into the QR block with safe space above the QR.
+- Reduced the visual weight of the bottom Punong Barangay name/title.
+- Preserved proportional QR/signature/logo rendering and transparent bitmap alpha.
+
+### Back composition
+- Aligned Date of Birth, Sex, Civil Status, and Address with consistent spacing.
+- Added English full-month DOB output such as **January 12, 1987**.
+- Reduced the Identification heading and improved paragraph wrapping.
+- Balanced the Issued By and Approved By blocks.
+- Moved Important Notice higher and replaced large bullet glyphs with small dash marks.
+- Restored the complete approved notice wording.
+- Added the Barangay Hall address above the email/phone footer inside safe margins.
+
+### Template and outline behavior
+- The full uploaded front/back source is mapped to the full 85 × 115 mm card without an inset card or decorative overlay.
+- Outer cut guides are drawn after the full-bleed content so an enabled guide remains visible.
+- All internal outlines remain independently controlled and off by default.
+
+### Validation status
+- Automated build/offline validation is required before release handoff.
+- Visual positioning remains pending user approval of generated-PDF screenshots and an Actual Size / 100% test print.
+
 ## Unreleased — September 4, 2026
 
 Current visual-control update for the 85 × 115 mm ID layout.

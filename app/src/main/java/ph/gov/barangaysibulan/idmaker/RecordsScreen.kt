@@ -338,7 +338,7 @@ private fun EmployeeEditorScreen(
                 item { EmployeeTextField("Full Name *", fullName) { fullName = it } }
                 item { EmployeeTextField("Position / Designation *", position) { position = it } }
                 item { EmployeeTextField("Control / ID Number *", controlNumber) { controlNumber = it } }
-                item { EmployeeTextField("Birthdate", birthdate, "MM/DD/YYYY") { birthdate = it } }
+                item { EmployeeTextField("Birthdate", birthdate, "YYYY-MM-DD or MM/DD/YYYY") { birthdate = it } }
                 item { EmployeeTextField("Address", address, singleLine = false) { address = it } }
 
                 item {

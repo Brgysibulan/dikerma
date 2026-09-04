@@ -1,4 +1,4 @@
-# Current Note — Barangay ID Maker v0.5.0
+# Current Note — Barangay ID Maker v0.6.0
 
 Date: September 4, 2026
 
@@ -10,6 +10,8 @@ The most important design rule now is:
 > **Uploaded front/back artwork is the design. The app should only place dynamic data on top of it.**
 
 The app should not add extra decorative header/footer/body panels over an uploaded background.
+
+The complete uploaded artwork is mapped to the complete 85 × 115 mm rectangle. The app does not place a smaller card inside that area or crop decorative edges from the supplied template.
 
 ## Locked Physical Size
 - A4 Portrait: 210 × 297 mm
@@ -68,6 +70,8 @@ A global Font Scale slider is available from **85% to 120%**.
 
 Headings, labels and values may use different sizes/weights, but the font family stays uniform throughout the ID.
 
+Most PDF text is plain text over the artwork. There are no automatic glow, shadow, gray/white backing, pill, or sticker effects. Long names and designations use controlled two-line fitting.
+
 ## Photo & Signature Modes
 Both ID Photo and Employee Signature support:
 
@@ -86,6 +90,19 @@ Both ID Photo and Employee Signature support:
 - QR remains upload-based from WEBV3LITE.
 - No automatic QR generator is required in the app.
 - The uploaded QR is stored with the employee record and rendered on the front ID.
+- `SCAN TO VERIFY` belongs to the isolated lower-right QR block and does not share the Employee No. area.
+
+## Date Display
+- Stored birthdates are normalized for PDF output.
+- Required display style: **January 12, 1987** (`MMMM d, yyyy`, English month names).
+- Supported stored/input forms include ISO `1987-01-12`, numeric `01/12/1987`, and already formatted English dates.
+- Unrecognized or empty dates render as a dash rather than exposing an inconsistent raw date.
+
+## Back Content
+- The Identification statement uses the approved full wording with controlled wrapping.
+- Issued By and Approved By occupy balanced left/right blocks.
+- Important Notice uses small dash marks and the complete approved wording.
+- The footer includes the Barangay Hall address, email, and telephone number inside safe margins.
 
 ## What to Check in the Next PDF / Actual Print
 1. Measure each front/back ID and confirm **85 × 115 mm** at Actual Size / 100%.
@@ -105,6 +122,8 @@ Both ID Photo and Employee Signature support:
 15. Test Font Scale without breaking alignment.
 16. Confirm back text, Identification section and Important Notice remain readable.
 17. With no Person 2 selected, confirm the bottom row has no empty cut boxes.
+18. Confirm DOB is shown like **January 12, 1987**.
+19. Confirm the address/email/phone footer stays inside the card.
 
 ## Printing Rule
 Print at **Actual Size / 100%**. Never use **Fit to Page** for physical-size validation.
@@ -118,3 +137,5 @@ The next priority is visual fine-tuning based on real generated-PDF screenshots 
 - A4 front/back pairing
 - uploaded-background-first design rule
 - fully offline architecture
+
+Do not call the visual layout final until the generated PDF screenshots and Actual Size / 100% test print are reviewed and approved by the user.

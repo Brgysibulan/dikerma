@@ -1,13 +1,13 @@
 # Barangay ID Maker
 
-## App Description — v0.5.0 + current overlay controls
+## App Description — v0.6.0
 A **fully offline Android Barangay Employee ID Maker** for Barangay Sibulan. The app stores employee records on-device, accepts employee photos and signatures from Camera or Gallery/files, supports optional offline background cleanup, stores uploaded WEBV3LITE QR images, and generates print-ready A4 PDFs for front/back employee IDs.
 
 The current physical ID size is **85 mm × 115 mm portrait** for both the front and back. The uploaded front/back artwork is treated as the actual visual background. The app should only place dynamic data on top of that artwork unless no background design has been uploaded.
 
 ## Current Version
-- Version name: **0.5.0**
-- Version code: **6**
+- Version name: **0.6.0**
+- Version code: **7**
 - Android minSdk: 26
 - Android targetSdk: 35
 
@@ -84,6 +84,8 @@ Settings provides one global font-family choice:
 The selected family is used across the full ID. Headings, labels and values differ only by size and weight rather than switching randomly between typefaces.
 
 A global **Font Scale** control is also available from **85% to 120%** so the overall text size can be adjusted without changing every field individually.
+
+Text is rendered directly over the uploaded artwork without glow, shadow, sticker, pill, or automatic gray/white backing effects. Long employee names and designations may wrap to two lines and scale only within a controlled readable range.
 
 ## Employee Photo and Signature Input
 Both **ID Photo** and **Employee Signature** support two modes.
@@ -170,6 +172,10 @@ Dynamic content includes:
 
 Back section lines are optional and controlled from Settings.
 
+Date of Birth is displayed in English full-month form, for example **January 12, 1987**, even when an existing record stores a supported machine-friendly value such as `1987-01-12` or `01/12/1987`.
+
+The contact footer stays inside the card safe area and includes the Barangay Hall address, `brgysibulan8001@gmail.com`, and `0970 972 3363`.
+
 ## Printing
 Always print the generated PDF using:
 - **Actual Size / 100%**
@@ -208,6 +214,8 @@ Before finalizing the visual layout, test:
 10. Font Scale changes all text proportionally without breaking alignment.
 11. Back text and Important Notice remain readable.
 12. When Person 2 is empty, no blank bottom-row cut boxes appear.
+13. Date of Birth appears like **January 12, 1987**, never as a raw numeric or ISO date.
+14. QR and `SCAN TO VERIFY` stay in their lower-right block and never overlap Employee No.
 
 ## Build and APK
 GitHub Actions automatically builds a debug APK on pushes to `main` and verifies that the APK remains offline-only.
@@ -219,4 +227,4 @@ To obtain the latest APK from GitHub:
 4. Download the **BarangayIDMaker-debug-apk** artifact.
 
 ## Current Direction
-The project is now focused on **background-first rendering**: the uploaded barangay artwork defines the visual design, while the app provides precise data placement, optional outlines, consistent typography and fully offline PDF generation at the locked **85 × 115 mm** physical size.
+The project is now focused on **background-first rendering**: the uploaded barangay artwork defines the visual design, while the app only overlays data, optional outlines, consistent typography and fully offline PDF output at the locked **85 × 115 mm** physical size. The visual positions remain subject to user approval of generated-PDF screenshots and an Actual Size / 100% test print.
