@@ -172,6 +172,7 @@ private fun EmployeeEditorScreen(
         var photoUri by remember { mutableStateOf(employee?.photoUri ?: "") }
         var signatureUri by remember { mutableStateOf(employee?.signatureUri ?: "") }
         var qrToken by remember { mutableStateOf(employee?.qrToken ?: "") }
+        var qrImageUri by remember { mutableStateOf(employee?.qrImageUri ?: "") }
         var status by remember { mutableStateOf(employee?.status ?: "Active") }
         var message by remember { mutableStateOf("") }
         var saving by remember { mutableStateOf(false) }
@@ -196,6 +197,12 @@ private fun EmployeeEditorScreen(
             uri?.let {
                 signatureUri = it.toString()
                 keepUri(signatureUri)
+            }
+        }
+        val qrImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let {
+                qrImageUri = it.toString()
+                keepUri(qrImageUri)
             }
         }
 
@@ -256,9 +263,17 @@ private fun EmployeeEditorScreen(
                     HorizontalDivider()
                     Spacer(Modifier.height(6.dp))
                     Text("WEBV3LITE Verification", style = MaterialTheme.typography.titleMedium)
-                    Text("Leave blank for now if the QR token has not been imported yet.", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "You can either paste the WEBV3LITE token/verification URL or upload the QR image downloaded from WEBV3LITE.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
-                item { EmployeeTextField("QR Token / UUID", qrToken) { qrToken = it } }
+                item { EmployeeTextField("QR Token / Verification URL (optional)", qrToken) { qrToken = it } }
+                item {
+                    EmployeeAssetRow("Upload WEBV3LITE QR Image", qrImageUri.isNotBlank()) {
+                        qrImagePicker.launch(arrayOf("image/*"))
+                    }
+                }
 
                 item {
                     Text("Status", style = MaterialTheme.typography.labelLarge)
@@ -307,6 +322,7 @@ private fun EmployeeEditorScreen(
                                     photoUri = photoUri.ifBlank { null },
                                     signatureUri = signatureUri.ifBlank { null },
                                     qrToken = qrToken.trim().ifBlank { null },
+                                    qrImageUri = qrImageUri.ifBlank { null },
                                     status = status
                                 )
                                 if (employee == null) dao.insert(record) else dao.update(record)
