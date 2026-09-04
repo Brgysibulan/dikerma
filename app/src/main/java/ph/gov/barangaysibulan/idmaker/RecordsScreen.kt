@@ -26,6 +26,11 @@ import kotlinx.coroutines.launch
 import ph.gov.barangaysibulan.idmaker.data.AppDatabase
 import ph.gov.barangaysibulan.idmaker.data.Employee
 
+private enum class AssetInputMode {
+    AUTO_CLEAN,
+    KEEP_ORIGINAL
+}
+
 @Composable
 fun RecordsScreen() {
     val context = LocalContext.current
@@ -112,9 +117,7 @@ fun RecordsScreen() {
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 items(filtered, key = { it.id }) { employee ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth().clickable { editingEmployee = employee }
-                    ) {
+                    Card(modifier = Modifier.fillMaxWidth().clickable { editingEmployee = employee }) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -191,6 +194,8 @@ private fun EmployeeEditorScreen(
         var message by remember { mutableStateOf("") }
         var saving by remember { mutableStateOf(false) }
 
+        var photoMode by remember { mutableStateOf(AssetInputMode.AUTO_CLEAN) }
+        var signatureMode by remember { mutableStateOf(AssetInputMode.AUTO_CLEAN) }
         var photoProcessing by remember { mutableStateOf(false) }
         var signatureProcessing by remember { mutableStateOf(false) }
         var photoMessage by remember { mutableStateOf("") }
@@ -220,6 +225,20 @@ private fun EmployeeEditorScreen(
             }
         }
 
+        fun useOriginalPhoto(source: Uri) {
+            deleteTransientPhoto()
+            photoUri = source.toString()
+            keepUri(photoUri)
+            photoMessage = "Using original uploaded photo. No background removal or auto-cleaning will be applied."
+        }
+
+        fun useOriginalSignature(source: Uri) {
+            deleteTransientSignature()
+            signatureUri = source.toString()
+            keepUri(signatureUri)
+            signatureMessage = "Using original uploaded signature. Transparent PNG is recommended; no background removal will be applied."
+        }
+
         fun processPhoto(source: Uri, cameraTarget: CameraTarget? = null) {
             photoProcessing = true
             photoMessage = "Processing photo fully offline…"
@@ -231,7 +250,7 @@ private fun EmployeeEditorScreen(
                     photoUri = result.uri
                     photoMessage = result.note
                 } else {
-                    photoMessage = "Could not separate the background. Try another photo with a plain solid background and even lighting."
+                    photoMessage = "Could not separate the background. Try another photo with a plain solid background and even lighting, or choose Keep Original."
                 }
                 photoProcessing = false
             }
@@ -248,17 +267,21 @@ private fun EmployeeEditorScreen(
                     signatureUri = result.uri
                     signatureMessage = result.note
                 } else {
-                    signatureMessage = "Could not detect the signature clearly. Use black/dark ink on clean white or light paper and try again."
+                    signatureMessage = "Could not detect the signature clearly. Try another image or upload a ready transparent PNG using Keep Original."
                 }
                 signatureProcessing = false
             }
         }
 
         val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let { processPhoto(it) }
+            uri?.let {
+                if (photoMode == AssetInputMode.AUTO_CLEAN) processPhoto(it) else useOriginalPhoto(it)
+            }
         }
         val signaturePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let { processSignature(it) }
+            uri?.let {
+                if (signatureMode == AssetInputMode.AUTO_CLEAN) processSignature(it) else useOriginalSignature(it)
+            }
         }
         val qrImagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             uri?.let {
@@ -299,7 +322,7 @@ private fun EmployeeEditorScreen(
                         style = MaterialTheme.typography.headlineSmall
                     )
                     Text(
-                        "Employee information and image processing stay only on this device.",
+                        "Employee information and image handling stay only on this device.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -331,9 +354,9 @@ private fun EmployeeEditorScreen(
                 item {
                     HorizontalDivider()
                     Spacer(Modifier.height(6.dp))
-                    Text("Photo & Signature — Offline Auto Cleanup", style = MaterialTheme.typography.titleMedium)
+                    Text("Photo & Signature", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "ID photo: take a new picture or upload an existing photo. A plain solid-color background works best for automatic white-background cleanup. Signature: use black/dark ink on clean white or light paper.",
+                        "Choose Auto Clean when you want the app to remove the background. Choose Keep Original when the photo/signature is already prepared and should be used as uploaded.",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -341,18 +364,32 @@ private fun EmployeeEditorScreen(
                 item {
                     ProcessedAssetCard(
                         title = "ID Photo",
-                        instruction = "Camera and uploaded photos use the same offline cleanup: plain background removal, pure white replacement, and auto-crop.",
+                        instruction = "Auto Clean removes a plain background and replaces it with white. Keep Original uses your uploaded ID photo without background removal.",
                         uriString = photoUri,
                         processing = photoProcessing,
                         statusText = photoMessage,
+                        mode = photoMode,
+                        originalHint = "Best for an existing ID photo that already has the background you want.",
+                        onModeChange = {
+                            photoMode = it
+                            photoMessage = if (it == AssetInputMode.AUTO_CLEAN) {
+                                "Auto Clean selected. The next Camera/Gallery image will be processed."
+                            } else {
+                                "Keep Original selected. Upload from Gallery/Files; the image will not be cleaned."
+                            }
+                        },
                         onCamera = {
-                            runCatching {
-                                OfflineImageProcessor.createCameraTarget(context, "id_photo_")
-                            }.onSuccess { target ->
-                                pendingPhotoCamera = target
-                                photoCamera.launch(target.uri)
-                            }.onFailure {
-                                photoMessage = "Could not open a camera target on this device."
+                            if (photoMode == AssetInputMode.KEEP_ORIGINAL) {
+                                photoMessage = "For Keep Original, use Gallery / Upload. Camera capture currently uses Auto Clean."
+                            } else {
+                                runCatching {
+                                    OfflineImageProcessor.createCameraTarget(context, "id_photo_")
+                                }.onSuccess { target ->
+                                    pendingPhotoCamera = target
+                                    photoCamera.launch(target.uri)
+                                }.onFailure {
+                                    photoMessage = "Could not open a camera target on this device."
+                                }
                             }
                         },
                         onGallery = { photoPicker.launch(arrayOf("image/*")) },
@@ -367,21 +404,42 @@ private fun EmployeeEditorScreen(
                 item {
                     ProcessedAssetCard(
                         title = "Employee Signature",
-                        instruction = "The app removes the light paper/background, keeps the dark signature, auto-crops it, and saves transparent PNG.",
+                        instruction = "Auto Clean removes light paper and saves a transparent signature. Keep Original is recommended when you already have a clean transparent PNG.",
                         uriString = signatureUri,
                         processing = signatureProcessing,
                         statusText = signatureMessage,
-                        onCamera = {
-                            runCatching {
-                                OfflineImageProcessor.createCameraTarget(context, "signature_")
-                            }.onSuccess { target ->
-                                pendingSignatureCamera = target
-                                signatureCamera.launch(target.uri)
-                            }.onFailure {
-                                signatureMessage = "Could not open a camera target on this device."
+                        mode = signatureMode,
+                        originalHint = "Recommended: upload a transparent PNG and choose Keep Original so the app does not alter it.",
+                        onModeChange = {
+                            signatureMode = it
+                            signatureMessage = if (it == AssetInputMode.AUTO_CLEAN) {
+                                "Auto Clean selected. The next Camera/Gallery signature will be processed."
+                            } else {
+                                "Keep Original selected. Upload a transparent PNG for the cleanest result."
                             }
                         },
-                        onGallery = { signaturePicker.launch(arrayOf("image/*")) },
+                        onCamera = {
+                            if (signatureMode == AssetInputMode.KEEP_ORIGINAL) {
+                                signatureMessage = "For Keep Original, upload your ready PNG from Gallery / Files. Camera capture currently uses Auto Clean."
+                            } else {
+                                runCatching {
+                                    OfflineImageProcessor.createCameraTarget(context, "signature_")
+                                }.onSuccess { target ->
+                                    pendingSignatureCamera = target
+                                    signatureCamera.launch(target.uri)
+                                }.onFailure {
+                                    signatureMessage = "Could not open a camera target on this device."
+                                }
+                            }
+                        },
+                        onGallery = {
+                            val types = if (signatureMode == AssetInputMode.KEEP_ORIGINAL) {
+                                arrayOf("image/png", "image/*")
+                            } else {
+                                arrayOf("image/*")
+                            }
+                            signaturePicker.launch(types)
+                        },
                         onClear = {
                             deleteTransientSignature()
                             signatureUri = ""
@@ -496,6 +554,9 @@ private fun ProcessedAssetCard(
     uriString: String,
     processing: Boolean,
     statusText: String,
+    mode: AssetInputMode,
+    originalHint: String,
+    onModeChange: (AssetInputMode) -> Unit,
     onCamera: () -> Unit,
     onGallery: () -> Unit,
     onClear: () -> Unit
@@ -513,16 +574,37 @@ private fun ProcessedAssetCard(
             Text(title, style = MaterialTheme.typography.titleSmall)
             Text(instruction, style = MaterialTheme.typography.bodySmall)
 
+            Text("Image handling", style = MaterialTheme.typography.labelLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ChoiceButton("Auto Clean", mode == AssetInputMode.AUTO_CLEAN) {
+                    onModeChange(AssetInputMode.AUTO_CLEAN)
+                }
+                ChoiceButton("Keep Original", mode == AssetInputMode.KEEP_ORIGINAL) {
+                    onModeChange(AssetInputMode.KEEP_ORIGINAL)
+                }
+            }
+            Text(
+                if (mode == AssetInputMode.AUTO_CLEAN) {
+                    "Background cleanup will run fully offline."
+                } else {
+                    originalHint
+                },
+                style = MaterialTheme.typography.bodySmall
+            )
+
             if (preview != null) {
                 Image(
                     bitmap = preview.asImageBitmap(),
-                    contentDescription = "$title processed preview",
+                    contentDescription = "$title preview",
                     modifier = Modifier.fillMaxWidth().height(170.dp),
                     contentScale = ContentScale.Fit
                 )
-                Text("Processed preview", style = MaterialTheme.typography.labelMedium)
+                Text("Image preview", style = MaterialTheme.typography.labelMedium)
             } else {
-                Text("No processed image yet", style = MaterialTheme.typography.bodySmall)
+                Text("No image selected yet", style = MaterialTheme.typography.bodySmall)
             }
 
             Row(
@@ -540,6 +622,10 @@ private fun ProcessedAssetCard(
                     enabled = !processing,
                     modifier = Modifier.weight(1f)
                 ) { Text("Gallery / Upload") }
+            }
+
+            if (mode == AssetInputMode.KEEP_ORIGINAL) {
+                Text("Keep Original applies to Gallery / Upload. Camera capture uses Auto Clean.", style = MaterialTheme.typography.bodySmall)
             }
 
             if (uriString.isNotBlank()) {
