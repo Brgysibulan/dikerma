@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased — September 4, 2026
+
+Image-input control update for employee photos and signatures.
+
+### Photo and signature modes
+- Added **Auto Clean** and **Keep Original** choices for both ID Photo and Employee Signature.
+- **Auto Clean — ID Photo:** removes a plain background, replaces it with white, validates the portrait and auto-crops it fully offline.
+- **Auto Clean — Signature:** removes light paper/background, extracts dark signature strokes, auto-crops the result and saves a transparent PNG.
+- **Keep Original — ID Photo:** uses the selected Gallery/File image without background removal.
+- **Keep Original — Signature:** uses the selected Gallery/File image without background removal.
+- Transparent PNG is recommended for Keep Original signatures to avoid unwanted background boxes in the generated PDF.
+- Keep Original currently uses **Gallery / Upload**; Camera capture continues to use Auto Clean.
+- Original Gallery/Documents files are not deleted by app-generated processed-file cleanup.
+
+### Unchanged behavior
+- QR remains upload-based from WEBV3LITE.
+- Fully offline operation remains unchanged.
+- CR80 card size, 30 × 35 mm photo frame, A4 slot positions and cut lines are unchanged.
+- Slot 1 = Person 1 Front, Slot 2 = Person 1 Back, Slot 3 = Person 2 Front, Slot 4 = Person 2 Back.
+
 ## 0.3.0 — September 4, 2026
 
 Refined CR80 front/back employee ID content and placement for actual printing.
