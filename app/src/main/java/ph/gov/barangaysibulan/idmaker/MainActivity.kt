@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
                                 onSettings = { screen = AppScreen.SETTINGS }
                             )
                             AppScreen.RECORDS -> RecordsScreen()
-                            AppScreen.GENERATE -> GenerateScreen()
+                            AppScreen.GENERATE -> PortraitGenerateScreen()
                             AppScreen.SETTINGS -> SettingsScreen()
                         }
                     }
