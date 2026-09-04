@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.1 — September 4, 2026
+
+Hotfix for invalid Person 1 / Person 2 photo content during PDF generation.
+
+### Photo validation hotfix
+- Added offline validation so sparse signature/document-like images are rejected from the **ID Photo** workflow.
+- Existing employee records are also checked before PDF generation.
+- Generate screen now shows **Invalid — replace photo** when a selected employee's saved photo does not look like a valid processed ID portrait.
+- PDF generation is blocked until invalid/missing selected-person photos are replaced.
+- Added clearer warning text explaining that a signature/document-like image may have been saved in the photo field.
+- Added additional bitmap recycling inside photo/signature processing to reduce memory pressure.
+
+### Unchanged behavior
+- QR remains upload-based.
+- Fully offline operation remains unchanged.
+- A4 paper slot positions, cut lines and CR80 card size are unchanged.
+- Slot 1 = Person 1 Front, Slot 2 = Person 1 Back, Slot 3 = Person 2 Front, Slot 4 = Person 2 Back.
+
+### Version
+- Android version bumped to `0.2.1` / versionCode 3.
+
 ## 0.2.0 — September 4, 2026
 
 Improvement release for the fully offline Barangay ID Maker.
