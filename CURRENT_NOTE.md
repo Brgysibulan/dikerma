@@ -1,60 +1,22 @@
 # Current Note — Barangay ID Maker v0.7.1
 
-Date: September 4, 2026
+Date: September 5, 2026
 
-## Latest Continuation Handoff
+## Stable Status
+**v0.7.1 / versionCode 10 is the CURRENT STABLE BASELINE of DIKERMAAPP / Barangay ID Maker.**
+
+Use v0.7.1 as the known-good reference point for future development, experiments, UI changes, and layout refinements.
+
+Important distinction:
+- **Stable build:** v0.7.1
+- **Visual layout:** still adjustable and subject to user approval from generated-PDF screenshots and an Actual Size / 100% print test
+- Do not treat future experimental layout changes as the new stable baseline unless they are explicitly approved and documented.
+
+Latest successful validation for the current code line:
 - Repository: `Brgysibulan/dikerma`
 - Branch: `main`
-- Working implementation: saved Front/Back Layout Studio and shared PDF layout model
-- Current build: **0.7.1 / versionCode 10**
-- GitHub Actions: run **#77** passed compile and offline-only verification
-- APK artifact: `BarangayIDMaker-debug-apk`
-
-The user tested the earlier v0.6.0 PDF and supplied a screenshot. That screenshot is a test reference only and was **not approved as final**.
-
-Observed from that screenshot:
-- Person 1 Front and Back correctly occupied the top-left/top-right slots.
-- The optional Person 2 bottom row correctly remained blank with no empty cut boxes.
-- The employee signature displayed as an unacceptable black rectangle.
-- The back Important Notice and footer were too dense and too close to the lower artwork.
-
-Corrections implemented through v0.7.1:
-- Added a mobile-friendly Front/Back Layout Studio under Settings.
-- Every overlay can be tapped and dragged on a live 85 × 115 mm background preview.
-- Position and size sliders provide fine adjustment without requiring manual coordinate entry.
-- Text items have independent size, alignment, black/white/green color, visibility, underline on/off, text-outline on/off, and text-outline thickness.
-- Critical overlap warnings cover Photo versus employee information, QR versus Employee No./signature, and Back section/footer collisions.
-- The QR placement remains square and the uploaded QR itself is rendered proportionally.
-- Layout can be locked to prevent accidental edits.
-- One saved placement applies globally and uniformly to all employee records and both people on the A4 sheet.
-- Front and Back each have a professional-default reset.
-- Removed the duplicated bottom Front signatory name/title; approval remains on the Back.
-- Retained the v0.6.1 light/dark signature cleanup and PDF-time legacy black-background repair.
-- Renamed the default ID-photo cleanup choice to **White BG (Default)** and made its pure-white result explicit before upload.
-- Kept signature cleanup transparent, with a white preview surface, so no black or white signature box is added to the ID.
-
-Required next test:
-1. Install the v0.7.1 APK from the `BarangayIDMaker-debug-apk` artifact.
-2. Upload the approved blank Front and Back backgrounds.
-3. Open Layout Studio, arrange both sides, save, and lock the placement.
-4. Reopen Layout Studio and confirm the saved positions remain.
-5. Generate IDs for two employees and confirm the same layout is applied to both.
-6. Confirm per-text underline is independent and off by default.
-7. Confirm the ID-photo cleanup result is pure white and the signature remains transparent.
-8. Confirm Important Notice and footer do not overlap.
-9. Send the new Front/Back screenshot for another layout review.
-10. Print at Actual Size / 100% and measure 85 × 115 mm before approval.
-
-## Current Build Purpose
-The current build is for arranging one reusable professional composition and applying it uniformly to a planned 200-ID batch, while preserving the corrected **85 × 115 mm portrait ID**, user-controlled outlines, and consistent typography.
-
-The most important design rule now is:
-
-> **Uploaded front/back artwork is the design. The app should only place dynamic data on top of it.**
-
-The app should not add extra decorative header/footer/body panels over an uploaded background.
-
-The complete uploaded artwork is mapped to the complete 85 × 115 mm rectangle. The app does not place a smaller card inside that area or crop decorative edges from the supplied template.
+- Android version: **0.7.1 / versionCode 10**
+- GitHub Actions run **#81** completed the debug APK build, offline-only verification, and APK artifact upload successfully.
 
 ## Locked Physical Size
 - A4 Portrait: 210 × 297 mm
@@ -72,139 +34,186 @@ The complete uploaded artwork is mapped to the complete 85 × 115 mm rectangle. 
 
 If Person 2 is not selected, the bottom row stays unused and no empty bottom-row cut boxes are drawn.
 
-## Background-First Rendering
-When a front/back background is uploaded:
-- No extra app-generated decorative green header is added.
-- No app-generated decorative footer band is added.
-- No translucent body panel is added over the artwork.
-- Dynamic data only is rendered over the background.
+## Main Design Rule
+> **Uploaded front/back artwork is the design. The app only places dynamic data and optional overlays on top of it.**
 
-A basic fallback design may be used only if the corresponding uploaded background is missing.
+When an uploaded background exists:
+- No extra decorative green header is added.
+- No extra decorative footer band is added.
+- No translucent body panel is added.
+- The complete uploaded artwork is mapped to the complete 85 × 115 mm card.
+- Dynamic content only is rendered over the background.
 
-## Outline Controls
-Settings now provides independent controls for:
+A simple fallback design may be used only when the corresponding uploaded background is missing.
+
+## Current Layout Studio
+Settings contains a mobile-friendly **Layout Studio** used to arrange one reusable Front/Back layout for all employee IDs.
+
+Current behavior:
+- Live 85 × 115 mm preview using the uploaded background.
+- Tap and drag any overlay element.
+- X/Y position, width, and height are stored in millimetres.
+- Saved placement applies uniformly to all current and future employee IDs.
+- Layout can be locked after saving.
+- Front and Back can be reset independently.
+- Editor-only guides and selection borders never print in the PDF.
+- Overlap warnings help detect obvious collisions before saving.
+
+### Precision and Alignment Controls
+The current Layout Studio includes:
+- Safe-margin guide
+- Horizontal center guide
+- Vertical center guide
+- Grid
+- Snap-to-grid
+- Precision nudge controls
+- Quick horizontal and vertical alignment controls
+- Reset Position / Size / Style for the selected element
+
+This reduces the need to estimate placement manually.
+
+## Independent Front Header Elements
+The Front header is not treated as one fixed text block.
+
+These are independently positionable:
+- Logo 1
+- Barangay Sibulan
+- Sta. Cruz / Municipality
+- Davao del Sur / Province
+- Barangay Employee ID
+- Logo 2
+
+**Sta. Cruz and Davao del Sur are separate layout elements.** Davao del Sur can be moved lower or adjusted independently without moving Sta. Cruz.
+
+## Per-Text Typography and Effects
+Each text element can have its own saved style.
+
+Available controls include:
+- Font family
+  - Sans Serif
+  - Serif
+  - Monospace
+- Text size
+- Bold on/off
+- Left / Center / Right alignment
+- Visibility
+- Text color presets
+- Custom HEX text color
+
+### Underline
+Per text element:
+- Underline on/off
+- Underline color
+- Underline thickness
+- Underline offset/distance
+- Text-width or full-element-width behavior
+
+Underline is off by default.
+
+### Text Outline
+Per text element:
+- Outline on/off
+- Outline color
+- Outline thickness
+
+Outline color is user-controlled and is not automatically forced to black or white.
+
+Text outline is off by default.
+
+### Text Shadow
+Per text element:
+- Shadow on/off
+- Shadow color
+- Shadow opacity
+- Horizontal offset
+- Vertical offset
+- Shadow size/strength
+
+Shadow is off by default.
+
+The app should not create automatic gray/white/black pills, sticker backgrounds, or glow boxes behind normal text.
+
+## Existing Outline Controls
+The separate line/box outline settings remain available for:
 - Outer cut guide
 - Photo outline
 - Employee info divider lines
 - Signature line
 - QR outline
 - Back section divider lines
-- Outline thickness: 0.30–1.50 pt
+- Outline thickness
 
-Current defaults:
-- Outer cut guide: **On**
-- Photo outline: **Off**
-- Employee info divider lines: **Off**
-- Signature line: **Off**
-- QR outline: **Off**
-- Back section divider lines: **Off**
+Default behavior remains intentionally minimal so the uploaded background stays clean.
 
-The goal is to avoid over-outlining an ID when the uploaded artwork already contains its own visual structure.
+## PDF Rendering Rule
+The Layout Studio preview and generated PDF use the same saved layout/style model.
 
-## Typography Controls
-The ID now uses one consistent font family across front and back.
+Saved settings used by the PDF include:
+- Position
+- Size
+- Font family
+- Font size
+- Font weight
+- Alignment
+- Text color
+- Underline
+- Text outline
+- Text shadow
+- Visibility
 
-Available choices:
-- Sans Serif — default
-- Serif
-- Monospace
+The goal is that a layout that looks correct in Layout Studio should render in the same position and style in the PDF.
 
-A global Font Scale slider is available from **85% to 120%**.
+## Date Display
+Birthdates displayed in the PDF use full English month format.
 
-Headings, labels and values may use different sizes/weights, but the font family stays uniform throughout the ID.
+Required example:
+**January 12, 1987**
 
-Most PDF text is plain text over the artwork. There are no automatic glow, shadow, gray/white backing, pill, or sticker effects. Long names and designations use controlled two-line fitting.
+Supported stored/input formats are normalized before PDF output. Empty or unrecognized dates render as a dash instead of exposing an inconsistent raw date.
 
-## Saved Layout Studio
-- Entry point: **Settings → Arrange Front & Back**
-- Tabs: Front and Back
-- The live preview uses the uploaded background and the first available employee record for sample values/assets.
-- Tap or drag an overlay to select and move it.
-- Fine controls: horizontal position, vertical position, width, height, text size, alignment, color, visibility, underline toggle, text-outline toggle, and text-outline thickness.
-- Editor-only safe guides and yellow selection borders never appear in generated PDFs.
-- Optional collision warnings call out obvious overlap risks before saving.
-- **Lock placement after saving** prevents accidental editing.
-- **Save placement • Apply to all IDs** stores one global layout for all current and future employee records.
-- Positions and sizes are saved in millimetres relative to the physical 85 × 115 mm card, not screen pixels.
-- The active PDF renderer reads the same saved placement model.
-- Text outline is per text element and off by default; existing line/box controls remain separate.
-- Underline is per text element, saved with the global placement, and off by default.
-- Employee data and Room records are not modified by layout editing.
-
-## Photo & Signature Modes
+## Photo and Signature Modes
 Both ID Photo and Employee Signature support:
 
 ### Auto Clean
-- Photo: **White BG (Default)** plain-background removal, pure-white replacement, validation and auto-crop
-- Signature: **Transparent BG** plain light/dark-background removal and transparent PNG output
+- ID Photo: **White BG (Default)** cleanup, pure-white replacement, validation, and auto-crop
+- Signature: **Transparent BG** cleanup and transparent PNG output
 - Fully offline
 
-The selected photo/signature is previewed on white. White is the replacement background for ID photos only; cleaned signatures stay transparent to prevent a printed rectangle.
-
 ### Keep Original
-- Gallery / Upload image is used without background cleanup
-- Recommended for already-prepared ID photos
-- Strongly recommended for ready transparent PNG signatures
+- Gallery / Upload file is used without background cleanup
+- Recommended for prepared ID photos
+- Strongly recommended for transparent PNG signatures
 - Camera capture currently uses Auto Clean
 
 ## QR Behavior
-- QR remains upload-based from WEBV3LITE.
-- No automatic QR generator is required in the app.
-- The uploaded QR is stored with the employee record and rendered on the front ID.
-- `SCAN TO VERIFY` belongs to the isolated lower-right QR block and does not share the Employee No. area.
+- QR remains manual/upload-based from WEBV3LITE.
+- No automatic QR generation is required in the app.
+- QR is stored with the employee record and rendered on the Front ID.
 
-## Date Display
-- Stored birthdates are normalized for PDF output.
-- Required display style: **January 12, 1987** (`MMMM d, yyyy`, English month names).
-- Supported stored/input forms include ISO `1987-01-12`, numeric `01/12/1987`, and already formatted English dates.
-- Unrecognized or empty dates render as a dash rather than exposing an inconsistent raw date.
+## A4 Batch Behavior
+- Maximum 2 people per A4 sheet.
+- Person 1 Front/Back stay paired on the top row.
+- Person 2 Front/Back stay paired on the bottom row.
+- One saved Layout Studio configuration is reused for the full batch, including a planned 200-ID production run.
 
-## Back Content
-- The Identification statement uses the approved full wording with controlled wrapping.
-- Issued By and Approved By occupy balanced left/right blocks.
-- Important Notice uses small dash marks and the complete approved wording.
-- The footer includes the Barangay Hall address, email, and telephone number inside safe margins.
-- The Important Notice and footer were moved upward after review of the first v0.6.0 generated-PDF screenshot.
-- Older app-generated signature files with an opaque uniform black rectangle are cleaned during PDF rendering; Keep Original files remain untouched.
+## Offline Policy
+The app remains fully offline.
+- `android.permission.INTERNET` remains removed.
+- GitHub Actions verifies the merged manifest before publishing the debug APK artifact.
+- Room employee records, photos, signatures, QR files, settings, layout data, and PDF generation stay on-device.
 
-## What to Check in the Next PDF / Actual Print
-1. Measure each front/back ID and confirm **85 × 115 mm** at Actual Size / 100%.
-2. Confirm uploaded background artwork is not covered by extra app decorative panels.
-3. Check overall front alignment and visual balance.
-4. Check photo placement against the background artwork.
-5. Check Name / Designation / Employee No. alignment and readability.
-6. Test a transparent PNG employee signature using Keep Original.
-7. Confirm no black/white rectangle appears behind the signature.
-8. Confirm QR scans reliably.
-9. Turn Photo outline on/off and verify the PDF changes.
-10. Turn Employee info dividers on/off and verify the PDF changes.
-11. Turn Signature line and QR outline on/off independently.
-12. Turn Back section dividers on/off independently.
-13. Adjust outline thickness and verify it is applied consistently.
-14. Test Sans Serif / Serif / Monospace and confirm one family is used throughout the ID.
-15. Test Font Scale without breaking alignment.
-16. Confirm back text, Identification section and Important Notice remain readable.
-17. With no Person 2 selected, confirm the bottom row has no empty cut boxes.
-18. Confirm DOB is shown like **January 12, 1987**.
-19. Confirm the address/email/phone footer stays inside the card.
-20. Save, close, and reopen Layout Studio; confirm placements persist.
-21. Generate two different employees; confirm both use the exact same placement.
-22. Confirm editor guides and selected-item borders never print.
-23. Enable an outline for one text element only and confirm other text remains plain.
-24. Confirm no duplicate Punong Barangay signatory block appears at the bottom of the Front.
+## Stable-Baseline Rule Going Forward
+Until explicitly changed:
+
+**CURRENT STABLE = v0.7.1 / versionCode 10**
+
+For future work:
+1. Start from the v0.7.1 stable baseline.
+2. Treat new layout/UI work as experimental until tested.
+3. Do not change the locked 85 × 115 mm size unless explicitly requested.
+4. Do not replace or redesign the uploaded background artwork automatically.
+5. Do not call a new visual layout final until the user approves the generated PDF and print test.
+6. Only mark a later version as the new stable baseline after explicit approval and documentation.
 
 ## Printing Rule
 Print at **Actual Size / 100%**. Never use **Fit to Page** for physical-size validation.
-
-## Offline Policy
-The app remains fully offline. INTERNET permission is removed and GitHub Actions verifies the merged manifest before publishing the debug APK artifact.
-
-## Current Priority
-The next priority is validating the saved Layout Studio workflow, then fine-tuning it from real generated-PDF screenshots and actual print measurements, while keeping these locked:
-- 85 × 115 mm physical ID size
-- A4 front/back pairing
-- uploaded-background-first design rule
-- one saved layout applied uniformly to the full 200-ID batch
-- fully offline architecture
-
-Do not call the visual layout final until the generated PDF screenshots and Actual Size / 100% test print are reviewed and approved by the user.
